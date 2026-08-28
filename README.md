@@ -116,17 +116,50 @@ Windows note: if `pip install rasterio` fails, use
 
 ## For team members
 
-Baked viewer scenes are committed, so the demo runs immediately after cloning —
-no pipeline run, no downloads:
+**Just want to see it?** Baked viewer scenes are committed. No pipeline run, no
+downloads:
 
 ```bash
 python -m http.server 8000        # then open localhost:8000/viewer/
 ```
 
-To re-run the pipeline yourself, fetch the source imagery with
-`scripts/fetch_maxar.py` (below). The LiDAR validation tiles are not in the
-repo — download them from The National Map for the scene footprint that
-`pipeline.ingest` prints.
+**Want to re-run the pipeline?** The source GeoTIFFs are committed too, so
+everything downstream regenerates in about two minutes:
+
+```bash
+python -m pipeline.depth_local antakya fm --model base
+python -m pipeline.depth_check antakya --orientation-from synthetic
+python -m pipeline.depth_check fm      --orientation-from synthetic
+python -m pipeline.ground      antakya --max-building-m 60
+python -m pipeline.ground      fm      --max-building-m 60
+python -m pipeline.planb       antakya --min-area 120
+python -m pipeline.planb       fm      --min-area 120
+python -m pipeline.bake        antakya fm --grid 512
+```
+
+Every stage reads the previous stage's output from disk, so **skipping one
+silently reuses stale data** rather than failing. Run them in order.
+
+**Want to reproduce the LiDAR validation?** The point clouds are not in the repo
+(231 MB). Download these four tiles from
+[The National Map](https://apps.nationalmap.gov/downloader) into `data/lidar/`
+— *Elevation Source Data (3DEP) → Lidar Point Cloud (LPC)*:
+
+```
+USGS_LPC_FL_Southwest_2018_D18_SUPPLEMENTAL_w1428n4840.laz
+USGS_LPC_FL_Southwest_2018_D18_SUPPLEMENTAL_w1428n4850.laz
+USGS_LPC_FL_Southwest_2018_D18_SUPPLEMENTAL_w1429n4840.laz
+USGS_LPC_FL_Southwest_2018_D18_SUPPLEMENTAL_w1429n4850.laz
+```
+
+The Fort Myers scene straddles all four, so pass them together:
+
+```bash
+python -m pipeline.validate fm --metric ridge --lidar data/lidar/*.laz
+```
+
+On PowerShell, wildcards are not expanded for external programs — use
+`--lidar (Get-ChildItem data\lidar\*.laz).FullName` or list the four paths.
 
 ### Run the synthetic regression scene
 
