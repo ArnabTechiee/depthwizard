@@ -1,0 +1,79 @@
+{
+  "gsd_m": 0.5,
+  "sun_elevation_deg": 42.0,
+  "sun_azimuth_deg": 135.0,
+  "buildings": [
+    {
+      "id": 0,
+      "row": 120,
+      "col": 150,
+      "w": 60,
+      "d": 60,
+      "height_m": 12.0,
+      "expected_shadow_px": 26.65470035590063
+    },
+    {
+      "id": 1,
+      "row": 140,
+      "col": 420,
+      "w": 80,
+      "d": 55,
+      "height_m": 28.0,
+      "expected_shadow_px": 62.1943008304348
+    },
+    {
+      "id": 2,
+      "row": 330,
+      "col": 200,
+      "w": 50,
+      "d": 50,
+      "height_m": 45.0,
+      "expected_shadow_px": 99.95512633462737
+    },
+    {
+      "id": 3,
+      "row": 300,
+      "col": 620,
+      "w": 70,
+      "d": 70,
+      "height_m": 18.0,
+      "expected_shadow_px": 39.982050533850945
+    },
+    {
+      "id": 4,
+      "row": 560,
+      "col": 350,
+      "w": 90,
+      "d": 60,
+      "height_m": 34.0,
+      "expected_shadow_px": 75.52165100838512
+    },
+    {
+      "id": 5,
+      "row": 600,
+      "col": 700,
+      "w": 45,
+      "d": 45,
+      "height_m": 55.0,
+      "expected_shadow_px": 122.16737663121121
+    },
+    {
+      "id": 6,
+      "row": 700,
+      "col": 160,
+      "w": 65,
+      "d": 80,
+      "height_m": 22.0,
+      "expected_shadow_px": 48.86695065248448
+    },
+    {
+      "id": 7,
+      "row": 450,
+      "col": 830,
+      "w": 55,
+      "d": 55,
+      "height_m": 40.0,
+      "expected_shadow_px": 88.84900118633543
+    }
+  ]
+}

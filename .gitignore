@@ -2,22 +2,16 @@
 __pycache__/
 *.pyc
 
-# Large and re-fetchable via scripts/fetch_maxar.py and The National Map
-data/raw/
+# LiDAR: 231 MB, re-downloadable from The National Map (see README)
 data/lidar/
 *.laz
 
-# Pipeline intermediates - regenerate with the commands in the README.
-# The JSON files beside them (buildings.json, validation.json, ingest.json)
-# ARE committed: they are small and hold the results the team cites.
+# Pipeline intermediates - regenerate in ~2 min with the README commands
 data/work/*/*.npy
 
-# Colab round-trip artefacts
 *__rgb.npy
 *__depth.npy
 depth_outputs.zip
 depthout/
-
-# Vendored at build time, not source
 viewer/vendor/
 outputs/
