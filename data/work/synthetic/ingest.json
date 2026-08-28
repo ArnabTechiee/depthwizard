@@ -1,0 +1,18 @@
+{
+  "scene_id": "synthetic",
+  "source_path": "data\\raw\\synthetic.tif",
+  "mode": "absolute",
+  "width": 1000,
+  "height": 1000,
+  "crs": "EPSG:32644",
+  "gsd_m": 0.5,
+  "gsd_x_m": 0.5,
+  "gsd_y_m": 0.5,
+  "sun_elevation_deg": 42.0,
+  "sun_azimuth_deg": 135.0,
+  "center_lat": 16.27857326637102,
+  "center_lon": 81.00233990218082,
+  "acquisition_date": "2026-08-26",
+  "downsample_factor": 1.0,
+  "metadata_source": "geotiff-tags"
+}

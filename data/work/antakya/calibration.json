@@ -1,0 +1,133 @@
+{
+  "scene": "antakya",
+  "scale": 155.09659185704984,
+  "n_anchors": 17,
+  "n_train": 11,
+  "n_inliers": 3,
+  "tolerance_m": 2.0,
+  "holdout_n": 6,
+  "holdout_rmse_m": 13.899343664384494,
+  "holdout_mae_m": 12.641337368301398,
+  "holdout_r2": -50.981782219880614,
+  "anchors": [
+    {
+      "label": 6,
+      "shadow_px": 15.0,
+      "height_m": 16.932324006893847,
+      "ndsm_rel": 0.10875563323497772,
+      "area_px": 1956
+    },
+    {
+      "label": 7,
+      "shadow_px": 4.0,
+      "height_m": 4.515286401838359,
+      "ndsm_rel": 0.17750753462314606,
+      "area_px": 7312
+    },
+    {
+      "label": 14,
+      "shadow_px": 9.0,
+      "height_m": 10.159394404136307,
+      "ndsm_rel": 0.09502735733985901,
+      "area_px": 1330
+    },
+    {
+      "label": 15,
+      "shadow_px": 7.0,
+      "height_m": 7.9017512032171275,
+      "ndsm_rel": 0.09356820583343506,
+      "area_px": 1093
+    },
+    {
+      "label": 17,
+      "shadow_px": 17.0,
+      "height_m": 19.189967207813023,
+      "ndsm_rel": 0.10479238629341125,
+      "area_px": 849
+    },
+    {
+      "label": 22,
+      "shadow_px": 4.5,
+      "height_m": 5.079697202068154,
+      "ndsm_rel": 0.12016430497169495,
+      "area_px": 3201
+    },
+    {
+      "label": 24,
+      "shadow_px": 5.0,
+      "height_m": 5.644108002297949,
+      "ndsm_rel": 0.1440916359424591,
+      "area_px": 10489
+    },
+    {
+      "label": 25,
+      "shadow_px": 7.0,
+      "height_m": 7.9017512032171275,
+      "ndsm_rel": 0.16684383153915405,
+      "area_px": 7802
+    },
+    {
+      "label": 29,
+      "shadow_px": 9.0,
+      "height_m": 10.159394404136307,
+      "ndsm_rel": 0.09875312447547913,
+      "area_px": 1121
+    },
+    {
+      "label": 33,
+      "shadow_px": 7.0,
+      "height_m": 7.9017512032171275,
+      "ndsm_rel": 0.11895281076431274,
+      "area_px": 1479
+    },
+    {
+      "label": 38,
+      "shadow_px": 14.0,
+      "height_m": 15.803502406434255,
+      "ndsm_rel": 0.10266505181789398,
+      "area_px": 1377
+    },
+    {
+      "label": 41,
+      "shadow_px": 17.0,
+      "height_m": 19.189967207813023,
+      "ndsm_rel": 0.12345588207244873,
+      "area_px": 1305
+    },
+    {
+      "label": 44,
+      "shadow_px": 8.0,
+      "height_m": 9.030572803676717,
+      "ndsm_rel": 0.12475267797708511,
+      "area_px": 3900
+    },
+    {
+      "label": 57,
+      "shadow_px": 12.5,
+      "height_m": 14.110270005744871,
+      "ndsm_rel": 0.13478410243988037,
+      "area_px": 6121
+    },
+    {
+      "label": 62,
+      "shadow_px": 8.0,
+      "height_m": 9.030572803676717,
+      "ndsm_rel": 0.11495423316955566,
+      "area_px": 2057
+    },
+    {
+      "label": 69,
+      "shadow_px": 6.0,
+      "height_m": 6.7729296027575385,
+      "ndsm_rel": 0.11862719058990479,
+      "area_px": 2241
+    },
+    {
+      "label": 70,
+      "shadow_px": 4.0,
+      "height_m": 4.515286401838359,
+      "ndsm_rel": 0.1441504955291748,
+      "area_px": 1195
+    }
+  ]
+}

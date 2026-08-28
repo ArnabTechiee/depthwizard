@@ -1,0 +1,349 @@
+<meta charset="utf-8">
+<title>DepthWizard — Single-View Height Estimation</title>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --line: #2a3038;
+    --text: #e6edf3; --dim: #8b949e; --accent: #4dd0a7; --water: #3b82f6;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); overflow: hidden;
+         font: 13px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  #stage { position: fixed; inset: 0; }
+  .panel {
+    position: fixed; background: rgba(22,27,34,.93); border: 1px solid var(--line);
+    border-radius: 8px; padding: 14px 16px; backdrop-filter: blur(8px);
+  }
+  #meta  { top: 16px; left: 16px; width: 268px; }
+  #probe { top: 16px; right: 16px; width: 236px; }
+  #flood { bottom: 16px; left: 16px; width: 340px; }
+  h2 { font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+       color: var(--accent); margin-bottom: 10px; font-weight: 600; }
+  .row { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
+  .row span:first-child { color: var(--dim); }
+  .row span:last-child { text-align: right; }
+  .big { font-size: 30px; color: var(--accent); line-height: 1.1; margin: 6px 0 2px; }
+  .hint { color: var(--dim); font-size: 12px; }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 10px 0; }
+  input[type=range] { width: 100%; accent-color: var(--water); margin: 8px 0 4px; }
+  #load { position: fixed; inset: 0; display: grid; place-items: center;
+          background: var(--bg); z-index: 9; }
+  /* CRITICAL: without this, [hidden] never wins over the #load rule above,
+     because author-stylesheet display:grid beats the UA default
+     [hidden]{display:none} regardless of selector specificity. This was
+     the actual bug — the loading screen could never be dismissed. */
+  #load[hidden] { display: none; }
+  #err { color: #f85149; max-width: 560px; text-align: center; line-height: 1.7;
+         white-space: pre-wrap; padding: 0 16px; }
+</style>
+
+<div id="stage"></div>
+<div id="load"><div id="err">loading…</div></div>
+
+<div class="panel" id="meta" hidden>
+  <h2>Scene</h2>
+  <div id="metaRows"></div>
+  <hr>
+  <h2>Accuracy</h2>
+  <div id="statRows"></div>
+</div>
+
+<div class="panel" id="probe" hidden>
+  <h2>Height probe</h2>
+  <div class="big" id="probeVal">—</div>
+  <div class="hint" id="probeSub">click any surface</div>
+</div>
+
+<div class="panel" id="flood" hidden>
+  <h2>Flood simulation</h2>
+  <input type="range" id="floodRange" min="0" max="100" value="0">
+  <div class="row"><span>water level</span><span id="floodLevel">0.0 m</span></div>
+  <div class="row"><span>submerged area</span><span id="floodArea">0.0%</span></div>
+  <div class="row"><span>buildings affected</span><span id="floodBld">0</span></div>
+  <hr>
+  <div class="row"><span>vertical exaggeration</span><span id="exagVal">2.0×</span></div>
+  <input type="range" id="exagRange" min="10" max="60" value="20">
+</div>
+
+<script>
+  // Plain, non-module script — runs before the importmap/module below,
+  // and registered with capture:true so it can also catch a failed
+  // module import (a non-bubbling resource error) if that ever happens.
+  window.addEventListener("error", function (ev) {
+    var loadEl = document.getElementById("load");
+    var errEl = document.getElementById("err");
+    if (!loadEl || !errEl) return;
+    if (errEl.dataset.specific === "1") return; // don't clobber a more specific message
+    loadEl.hidden = false;
+    var msg = ev.message || (ev.target && (ev.target.src || ev.target.href)) || "unknown error";
+    errEl.innerHTML =
+      "Failed to load: <b>" + msg + "</b><br><br>" +
+      "Open DevTools (F12) → Network tab and look for requests to " +
+      "<b>unpkg.com</b>. If they're red/blocked, that CDN is unreachable.";
+  }, true);
+
+  window.addEventListener("unhandledrejection", function (ev) {
+    var loadEl = document.getElementById("load");
+    var errEl = document.getElementById("err");
+    if (!loadEl || !errEl) return;
+    loadEl.hidden = false;
+    errEl.innerHTML = "Unhandled error: <b>" + ((ev.reason && ev.reason.message) || ev.reason) + "</b>";
+  });
+</script>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+} }
+</script>
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+const SCENE = new URLSearchParams(location.search).get("scene") || "antakya";
+const $ = id => document.getElementById(id);
+
+function fail(msg) {
+  $("load").hidden = false;
+  $("err").dataset.specific = "1";
+  $("err").innerHTML = msg;
+}
+
+function rows(target, pairs) {
+  target.innerHTML = pairs
+    .filter(([, v]) => v !== undefined && v !== null && v !== "")
+    .map(([k, v]) => `<div class="row"><span>${k}</span><span>${v}</span></div>`)
+    .join("");
+}
+
+function fmt(v, d = 1, suffix = "") {
+  return (typeof v === "number" && !Number.isNaN(v)) ? `${v.toFixed(d)}${suffix}` : null;
+}
+
+async function main() {
+  let meta, heights;
+  try {
+    const metaRes = await fetch(`data/${SCENE}/meta.json`);
+    if (!metaRes.ok) throw new Error(`meta.json HTTP ${metaRes.status}`);
+    meta = await metaRes.json();
+
+    const heightsRes = await fetch(`data/${SCENE}/heights.bin`);
+    if (!heightsRes.ok) throw new Error(`heights.bin HTTP ${heightsRes.status}`);
+    const buf = await heightsRes.arrayBuffer();
+    heights = new Float32Array(buf);
+  } catch (e) {
+    fail(`Could not load <b>data/${SCENE}/</b>.<br><br>
+          Run <b>python -m pipeline.bake ${SCENE}</b>, then serve this folder
+          with <b>python -m http.server 8000</b> and open
+          <b>localhost:8000/viewer/</b>.<br><br>
+          Opening index.html directly with file:// will not work — the browser
+          blocks fetch on local files.<br><br><i>${e}</i>`);
+    return;
+  }
+
+  if (!Array.isArray(meta.buildings)) {
+    try {
+      const bRes = await fetch(`data/${SCENE}/buildings.json`);
+      if (bRes.ok) {
+        const bJson = await bRes.json();
+        meta.buildings = Array.isArray(bJson) ? bJson : (bJson.buildings ?? []);
+      }
+    } catch { /* fall through to empty array below */ }
+  }
+  meta.buildings = meta.buildings ?? [];
+  meta.stats = meta.stats ?? {};
+
+  const N = meta.grid, SPAN = meta.span_m;
+  if (!N || !SPAN) {
+    fail(`meta.json is missing <b>grid</b> or <b>span_m</b>. Re-run the bake step.`);
+    return;
+  }
+  if (heights.length !== N * N) {
+    fail(`heights.bin has ${heights.length} values, expected ${N * N}. Re-run bake.`);
+    return;
+  }
+
+  try {
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(innerWidth, innerHeight);
+    $("stage").appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0d1117);
+    scene.fog = new THREE.Fog(0x0d1117, SPAN * 1.2, SPAN * 3.2);
+
+    const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 1, SPAN * 6);
+    camera.position.set(SPAN * 0.55, SPAN * 0.42, SPAN * 0.55);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.minDistance = SPAN * 0.08;
+    controls.maxDistance = SPAN * 2.2;
+
+    const el = THREE.MathUtils.degToRad(meta.sun_elevation_deg ?? 45);
+    const az = THREE.MathUtils.degToRad(meta.sun_azimuth_deg ?? 135);
+    const sun = new THREE.DirectionalLight(0xfff2dd, 2.1);
+    sun.position.set(
+      Math.cos(el) * Math.sin(az) * SPAN,
+      Math.sin(el) * SPAN,
+      -Math.cos(el) * Math.cos(az) * SPAN
+    );
+    scene.add(sun, new THREE.AmbientLight(0x93a4bd, 0.85));
+
+    const EXAG_0 = 2.0;
+    const geom = new THREE.PlaneGeometry(SPAN, SPAN, N - 1, N - 1);
+    geom.rotateX(-Math.PI / 2);
+    const pos = geom.attributes.position;
+    for (let i = 0; i < N * N; i++) pos.setY(i, heights[i] * EXAG_0);
+    geom.computeVertexNormals();
+
+    // A height-field has no real vertical faces, so building walls render as
+    // stretched rooftop pixels ("melted taffy"). Shading each vertex by how
+    // steep it is makes those faces read as walls instead of smears — a cheap
+    // stand-in for real facade geometry (T0-9) until that exists.
+    const nrm = geom.attributes.normal;
+    const shade = new Float32Array(N * N * 3);
+    function applySlopeShading() {
+      for (let i = 0; i < N * N; i++) {
+        const up = Math.max(0, nrm.getY(i));       // 1 = flat roof, 0 = vertical wall
+        const v = 0.25 + 0.75 * Math.pow(up, 0.6);
+        shade[i * 3] = shade[i * 3 + 1] = shade[i * 3 + 2] = v;
+      }
+      const attr = geom.getAttribute("color");
+      if (attr) attr.needsUpdate = true;
+      else geom.setAttribute("color", new THREE.BufferAttribute(shade, 3));
+    }
+    applySlopeShading();
+
+    const tex = new THREE.TextureLoader().load(`data/${SCENE}/texture.jpg`);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+    const terrain = new THREE.Mesh(
+      geom,
+      new THREE.MeshStandardMaterial({ map: tex, roughness: 0.95, metalness: 0.0,
+                                       vertexColors: true })
+    );
+    scene.add(terrain);
+
+    const water = new THREE.Mesh(
+      new THREE.PlaneGeometry(SPAN, SPAN).rotateX(-Math.PI / 2),
+      new THREE.MeshStandardMaterial({
+        color: 0x2f6fd0, transparent: true, opacity: 0.62,
+        roughness: 0.15, metalness: 0.0
+      })
+    );
+    water.visible = false;
+    scene.add(water);
+
+    const s = meta.stats;
+    const nBuildings = s.n_buildings ?? meta.buildings.length;
+    rows($("metaRows"), [
+      ["scene", meta.scene],
+      ["CRS", meta.crs],
+      ["GSD", fmt(meta.gsd_m, 3, " m/px")],
+      ["extent", `${SPAN.toFixed(0)} × ${SPAN.toFixed(0)} m`],
+      ["sun elev / az", (meta.sun_elevation_deg != null && meta.sun_azimuth_deg != null)
+        ? `${meta.sun_elevation_deg.toFixed(1)}° / ${meta.sun_azimuth_deg.toFixed(1)}°`
+        : null],
+      ["acquired", (meta.acquisition_date || "").slice(0, 10)],
+    ]);
+    rows($("statRows"), [
+      ["method", "shadow geometry"],
+      ["buildings", nBuildings],
+      ["measured from shadow", (s.n_measured != null && nBuildings)
+        ? `${s.n_measured} (${Math.round(100 * s.n_measured / nBuildings)}%)`
+        : null],
+      ["median height", fmt(s.median_height_m, 1, " m")],
+      ["max height", fmt(meta.max_height_m, 1, " m")],
+      ["repeatability MAE", fmt(s.repeatability_mae_m, 2, " m")],
+      ["repeatability RMSE", fmt(s.repeatability_rmse_m, 2, " m")],
+    ]);
+
+    const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+    let dragged = false;
+    renderer.domElement.addEventListener("pointerdown", () => (dragged = false));
+    renderer.domElement.addEventListener("pointermove", () => (dragged = true));
+    renderer.domElement.addEventListener("pointerup", ev => {
+      if (dragged) return;
+      ndc.x = (ev.clientX / innerWidth) * 2 - 1;
+      ndc.y = -(ev.clientY / innerHeight) * 2 + 1;
+      ray.setFromCamera(ndc, camera);
+      const hit = ray.intersectObject(terrain)[0];
+      if (!hit) return;
+
+      const u = (hit.point.x + SPAN / 2) / SPAN;
+      const v = (hit.point.z + SPAN / 2) / SPAN;
+      const col = Math.min(N - 1, Math.max(0, Math.round(u * (N - 1))));
+      const row = Math.min(N - 1, Math.max(0, Math.round(v * (N - 1))));
+      const h = heights[row * N + col];
+
+      let near = null, best = 1e9;
+      for (const b of meta.buildings) {
+        const d = (b.x - u) ** 2 + (b.y - v) ** 2;
+        if (d < best) { best = d; near = b; }
+      }
+      const close = (near && Math.sqrt(best) * SPAN < 25) ? near : null;
+
+      $("probeVal").textContent = `${h.toFixed(1)} m`;
+      $("probeSub").innerHTML = h < 0.5
+        ? "ground level"
+        : close
+          ? `≈ ${(h / 3).toFixed(1)} storeys<br>${close.area ?? "?"} m² footprint` +
+            (close.r != null ? `<br>± ${close.r.toFixed(1)} m repeatability` : "")
+          : `≈ ${(h / 3).toFixed(1)} storeys`;
+    });
+
+    const sorted = Float32Array.from(heights).sort();
+    const maxH = meta.max_height_m ?? 0;
+
+    $("floodRange").addEventListener("input", ev => {
+      const level = (ev.target.value / 100) * maxH;
+      const exag = +$("exagRange").value / 10;
+
+      water.visible = level > 0.01;
+      water.position.y = level * exag;
+      $("floodLevel").textContent = `${level.toFixed(1)} m`;
+
+      let lo = 0, hi = sorted.length;
+      while (lo < hi) { const m = (lo + hi) >> 1; sorted[m] < level ? lo = m + 1 : hi = m; }
+      $("floodArea").textContent = `${(100 * lo / sorted.length).toFixed(1)}%`;
+      $("floodBld").textContent =
+        meta.buildings.filter(b => b.h < level).length;
+    });
+
+    $("exagRange").addEventListener("input", ev => {
+      const exag = +ev.target.value / 10;
+      $("exagVal").textContent = `${exag.toFixed(1)}×`;
+      for (let i = 0; i < N * N; i++) pos.setY(i, heights[i] * exag);
+      pos.needsUpdate = true;
+      geom.computeVertexNormals();
+      applySlopeShading();
+      water.position.y = (($("floodRange").value / 100) * maxH) * exag;
+    });
+
+    addEventListener("resize", () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+
+    $("load").hidden = true;
+    for (const id of ["meta", "probe", "flood"]) $(id).hidden = false;
+
+    (function loop() {
+      requestAnimationFrame(loop);
+      controls.update();
+      renderer.render(scene, camera);
+    })();
+  } catch (e) {
+    fail(`Scene setup failed: <b>${e.message}</b><br><br><i>${e.stack || ""}</i>`);
+  }
+}
+
+main();
+</script>

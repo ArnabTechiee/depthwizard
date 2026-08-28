@@ -1,0 +1,18 @@
+{
+  "scene_id": "fm",
+  "source_path": "data\\raw\\fm.tif",
+  "mode": "absolute",
+  "width": 2048,
+  "height": 2048,
+  "crs": "EPSG:32617",
+  "gsd_m": 0.30517578125,
+  "gsd_x_m": 0.30517578125,
+  "gsd_y_m": 0.30517578125,
+  "sun_elevation_deg": 37.3,
+  "sun_azimuth_deg": 158.3,
+  "center_lat": 26.450227842516224,
+  "center_lon": -81.72757197291195,
+  "acquisition_date": "2021-12-27T16:13:02Z",
+  "downsample_factor": 1.0,
+  "metadata_source": "geotiff-tags"
+}

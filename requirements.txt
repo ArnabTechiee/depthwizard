@@ -1,0 +1,31 @@
+# ---------------------------------------------------------------------------
+# DepthWizard
+#
+# torch and torchvision are NOT listed here: install them first from the
+# CPU-only index, otherwise pip pulls the ~2.5 GB CUDA build for no benefit
+# on a machine without an NVIDIA GPU.
+#
+#   pip install --index-url https://download.pytorch.org/whl/cpu torch torchvision
+#   pip install -r requirements.txt
+# ---------------------------------------------------------------------------
+
+# Core numerics and geospatial
+numpy>=1.24
+scipy>=1.11
+rasterio>=1.3            # GeoTIFF / COG read, windowed remote reads
+pyproj>=3.5              # CRS and datum transforms
+Pillow>=10.0
+
+# Segmentation, morphology, robust fitting
+scikit-image>=0.22       # watershed splitting of merged city blocks
+scikit-learn>=1.3
+opencv-python-headless>=4.8
+
+# Local CPU depth inference (see torch note above)
+transformers>=4.40
+
+# LiDAR validation - the [lazrs] extra is what reads compressed .laz
+laspy[lazrs]>=2.5
+
+# Data acquisition (Maxar STAC catalogs, vendoring Three.js)
+requests>=2.31

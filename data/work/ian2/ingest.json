@@ -1,0 +1,18 @@
+{
+  "scene_id": "ian2",
+  "source_path": "data\\raw\\ian2.tif",
+  "mode": "absolute",
+  "width": 1024,
+  "height": 1024,
+  "crs": "EPSG:32617",
+  "gsd_m": 0.6103515625,
+  "gsd_x_m": 0.6103515625,
+  "gsd_y_m": 0.6103515625,
+  "sun_elevation_deg": 37.3,
+  "sun_azimuth_deg": 158.3,
+  "center_lat": 26.44214374956799,
+  "center_lon": -81.64793414745958,
+  "acquisition_date": "2021-12-27T16:13:02Z",
+  "downsample_factor": 2.0,
+  "metadata_source": "geotiff-tags"
+}

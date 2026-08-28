@@ -1,0 +1,18 @@
+{
+  "scene_id": "capecoral",
+  "source_path": "data\\raw\\capecoral.tif",
+  "mode": "absolute",
+  "width": 1024,
+  "height": 1024,
+  "crs": "EPSG:32617",
+  "gsd_m": 0.6103515625,
+  "gsd_x_m": 0.6103515625,
+  "gsd_y_m": 0.6103515625,
+  "sun_elevation_deg": 33.5,
+  "sun_azimuth_deg": 210.6,
+  "center_lat": 26.51719276102055,
+  "center_lon": -82.00621328657807,
+  "acquisition_date": "2021-12-18T19:15:07Z",
+  "downsample_factor": 2.0,
+  "metadata_source": "geotiff-tags"
+}

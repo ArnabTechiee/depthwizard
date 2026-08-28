@@ -1,0 +1,405 @@
+<meta charset="utf-8">
+<title>DepthWizard — Single-View Height Estimation</title>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --line: #2a3038;
+    --text: #e6edf3; --dim: #8b949e; --accent: #4dd0a7; --water: #3b82f6;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); overflow: hidden;
+         font: 13px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  #stage { position: fixed; inset: 0; }
+  .panel {
+    position: fixed; background: rgba(22,27,34,.93); border: 1px solid var(--line);
+    border-radius: 8px; padding: 14px 16px; backdrop-filter: blur(8px);
+  }
+  #meta  { top: 16px; left: 16px; width: 268px;
+           max-height: calc(100vh - 32px); overflow-y: auto; }
+  #probe { top: 16px; right: 16px; width: 240px; }
+  #flood { bottom: 16px; left: 16px; width: 340px; }
+  h2 { font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+       color: var(--accent); margin-bottom: 10px; font-weight: 600; }
+  .row { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
+  .row span:first-child { color: var(--dim); }
+  .row span:last-child { text-align: right; }
+  .big { font-size: 30px; color: var(--accent); line-height: 1.1; margin: 6px 0 2px; }
+  .hint { color: var(--dim); font-size: 12px; }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 10px 0; }
+  input[type=range] { width: 100%; accent-color: var(--water); margin: 8px 0 4px; }
+  #load { position: fixed; inset: 0; display: grid; place-items: center;
+          background: var(--bg); z-index: 9; }
+  #load[hidden] { display: none; }
+  #err { color: #f85149; max-width: 560px; text-align: center; line-height: 1.7;
+         white-space: pre-wrap; padding: 0 16px; }
+</style>
+
+<div id="stage"></div>
+<div id="load"><div id="err">loading…</div></div>
+
+<div class="panel" id="meta" hidden>
+  <h2>Scene</h2>
+  <div id="metaRows"></div>
+  <hr>
+  <h2>Accuracy</h2>
+  <div id="statRows"></div>
+  <div id="lidarPanel" hidden>
+    <hr>
+    <h2>Validated vs LiDAR</h2>
+    <div id="lidarRows"></div>
+    <div class="hint" id="lidarNote" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<div class="panel" id="probe" hidden>
+  <h2>Height probe</h2>
+  <div class="big" id="probeVal">—</div>
+  <div class="hint" id="probeSub">click any surface</div>
+</div>
+
+<div class="panel" id="flood" hidden>
+  <h2>Flood simulation</h2>
+  <input type="range" id="floodRange" min="0" max="100" value="0">
+  <div class="row"><span>water level</span><span id="floodLevel">0.0 m</span></div>
+  <div class="row"><span>submerged area</span><span id="floodArea">0.0%</span></div>
+  <div class="row"><span>buildings affected</span><span id="floodBld">0</span></div>
+  <hr>
+  <div class="row"><span>vertical exaggeration</span><span id="exagVal">1.0×</span></div>
+  <input type="range" id="exagRange" min="10" max="40" value="10">
+  <div class="row"><span>mesh</span><span id="meshInfo">—</span></div>
+</div>
+
+<script>
+  window.addEventListener("error", function (ev) {
+    var l = document.getElementById("load"), e = document.getElementById("err");
+    if (!l || !e || e.dataset.specific === "1") return;
+    l.hidden = false;
+    var m = ev.message || (ev.target && (ev.target.src || ev.target.href)) || "unknown";
+    e.innerHTML = "Failed to load: <b>" + m + "</b><br><br>Open DevTools (F12) → " +
+      "Network and check requests to <b>unpkg.com</b>.";
+  }, true);
+  window.addEventListener("unhandledrejection", function (ev) {
+    var l = document.getElementById("load"), e = document.getElementById("err");
+    if (!l || !e) return;
+    l.hidden = false;
+    e.innerHTML = "Unhandled error: <b>" + ((ev.reason && ev.reason.message) || ev.reason) + "</b>";
+  });
+</script>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+} }
+</script>
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+const SCENE = new URLSearchParams(location.search).get("scene") || "antakya";
+const WALL_THRESHOLD_M = 1.0;   // height jump that counts as a building edge
+const $ = id => document.getElementById(id);
+
+function fail(msg) {
+  $("load").hidden = false;
+  $("err").dataset.specific = "1";
+  $("err").innerHTML = msg;
+}
+
+function rows(target, pairs) {
+  target.innerHTML = pairs
+    .filter(([, v]) => v !== undefined && v !== null && v !== "")
+    .map(([k, v]) => `<div class="row"><span>${k}</span><span>${v}</span></div>`)
+    .join("");
+}
+
+const fmt = (v, d = 1, s = "") =>
+  (typeof v === "number" && !Number.isNaN(v)) ? `${v.toFixed(d)}${s}` : null;
+
+/**
+ * Build the city as real geometry instead of a smooth height-field.
+ *
+ * A PlaneGeometry interpolates between adjacent samples, so a building edge
+ * becomes a ramp and its texture smears down the slope ("melted taffy").
+ * Here every cell gets its own FLAT roof quad at its own height, and wherever
+ * two neighbouring cells differ by more than the threshold we insert a
+ * genuine VERTICAL quad between them. That produces sharp silhouettes, real
+ * walls, and a mesh that survives a ground-level camera.
+ *
+ * Roofs are textured from the source image. Walls get a separate procedural
+ * material — there is no real facade imagery in a nadir view, so inventing
+ * one from stretched roof pixels would be dishonest as well as ugly.
+ */
+function buildCity(heights, N, SPAN, threshold) {
+  const cell = SPAN / N, half = SPAN / 2;
+  const H = (r, c) => heights[r * N + c];
+
+  const roofPos = [], roofUv = [];
+  const wallPos = [], wallCol = [];
+
+  const pushWall = (ax, az, bx, bz, yLow, yHigh) => {
+    // Two triangles, wound so the face points outward from the taller side.
+    wallPos.push(ax, yLow, az, bx, yLow, bz, bx, yHigh, bz,
+                 ax, yLow, az, bx, yHigh, bz, ax, yHigh, az);
+    // Darker at the base: cheap ambient occlusion, reads as depth.
+    const lo = 0.30, hi = 0.72;
+    wallCol.push(lo, lo, lo, lo, lo, lo, hi, hi, hi,
+                 lo, lo, lo, hi, hi, hi, hi, hi, hi);
+  };
+
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      const h = H(r, c);
+      const x0 = -half + c * cell, x1 = x0 + cell;
+      const z0 = -half + r * cell, z1 = z0 + cell;
+
+      roofPos.push(x0, h, z0, x1, h, z1, x1, h, z0,
+             x0, h, z0, x0, h, z1, x1, h, z1);
+      const u0 = c / N, u1 = (c + 1) / N, v0 = 1 - r / N, v1 = 1 - (r + 1) / N;
+      roofUv.push(u0, v0, u1, v0, u1, v1,
+                  u0, v0, u1, v1, u0, v1);
+
+      if (c + 1 < N) {
+        const hr = H(r, c + 1), d = h - hr;
+        if (Math.abs(d) > threshold) {
+          const lo = Math.min(h, hr), hi = Math.max(h, hr);
+          if (d > 0) pushWall(x1, z1, x1, z0, lo, hi);
+          else pushWall(x1, z0, x1, z1, lo, hi);
+        }
+      }
+      if (r + 1 < N) {
+        const hd = H(r + 1, c), d = h - hd;
+        if (Math.abs(d) > threshold) {
+          const lo = Math.min(h, hd), hi = Math.max(h, hd);
+          if (d > 0) pushWall(x0, z1, x1, z1, lo, hi);
+          else pushWall(x1, z1, x0, z1, lo, hi);
+        }
+      }
+    }
+  }
+
+  const roof = new THREE.BufferGeometry();
+  roof.setAttribute("position", new THREE.Float32BufferAttribute(roofPos, 3));
+  roof.setAttribute("uv", new THREE.Float32BufferAttribute(roofUv, 2));
+  roof.computeVertexNormals();
+
+  const wall = new THREE.BufferGeometry();
+  wall.setAttribute("position", new THREE.Float32BufferAttribute(wallPos, 3));
+  wall.setAttribute("color", new THREE.Float32BufferAttribute(wallCol, 3));
+  wall.computeVertexNormals();
+
+  return { roof, wall,
+           tris: (roofPos.length + wallPos.length) / 9,
+           walls: wallPos.length / 18 };
+}
+
+async function main() {
+  let meta, heights;
+  try {
+    const m = await fetch(`data/${SCENE}/meta.json`);
+    if (!m.ok) throw new Error(`meta.json HTTP ${m.status}`);
+    meta = await m.json();
+    const h = await fetch(`data/${SCENE}/heights.bin`);
+    if (!h.ok) throw new Error(`heights.bin HTTP ${h.status}`);
+    heights = new Float32Array(await h.arrayBuffer());
+  } catch (e) {
+    fail(`Could not load <b>data/${SCENE}/</b>.<br><br>
+          Run <b>python -m pipeline.bake ${SCENE}</b>, then serve with
+          <b>python -m http.server 8000</b> and open
+          <b>localhost:8000/viewer/?scene=${SCENE}</b>.<br><br><i>${e}</i>`);
+    return;
+  }
+
+  meta.buildings = meta.buildings ?? [];
+  meta.stats = meta.stats ?? {};
+  const N = meta.grid, SPAN = meta.span_m;
+  if (!N || !SPAN || heights.length !== N * N) {
+    fail(`heights.bin has ${heights.length} values, expected ${N * N}. Re-run bake.`);
+    return;
+  }
+
+  try {
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(innerWidth, innerHeight);
+    $("stage").appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0d1117);
+    scene.fog = new THREE.Fog(0x0d1117, SPAN * 1.3, SPAN * 3.4);
+
+    const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.5, SPAN * 6);
+    camera.position.set(SPAN * 0.45, SPAN * 0.30, SPAN * 0.45);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.maxPolarAngle = Math.PI * 0.495;
+    controls.minDistance = SPAN * 0.03;
+    controls.maxDistance = SPAN * 2.2;
+
+    const el = THREE.MathUtils.degToRad(meta.sun_elevation_deg ?? 45);
+    const az = THREE.MathUtils.degToRad(meta.sun_azimuth_deg ?? 135);
+    scene.add(
+      new THREE.DirectionalLight(0xfff2dd, 2.0).translateX(0),
+      new THREE.AmbientLight(0x93a4bd, 0.9)
+    );
+    scene.children[0].position.set(
+      Math.cos(el) * Math.sin(az) * SPAN,
+      Math.sin(el) * SPAN,
+      -Math.cos(el) * Math.cos(az) * SPAN
+    );
+
+    const t0 = performance.now();
+    const { roof, wall, tris, walls } = buildCity(heights, N, SPAN, WALL_THRESHOLD_M);
+    const buildMs = Math.round(performance.now() - t0);
+
+    const tex = new THREE.TextureLoader().load(`data/${SCENE}/texture.jpg`);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+    const city = new THREE.Group();
+    const roofMesh = new THREE.Mesh(roof, new THREE.MeshStandardMaterial({
+      map: tex, roughness: 0.95, metalness: 0.0
+    }));
+    const wallMesh = new THREE.Mesh(wall, new THREE.MeshStandardMaterial({
+      color: 0xb9ac9c, vertexColors: true, roughness: 0.85, metalness: 0.0,
+      side: THREE.DoubleSide
+    }));
+    city.add(roofMesh, wallMesh);
+    scene.add(city);
+
+    $("meshInfo").textContent =
+      `${Math.round(tris / 1000)}k tris · ${walls} walls · ${buildMs}ms`;
+
+    const water = new THREE.Mesh(
+      new THREE.PlaneGeometry(SPAN, SPAN).rotateX(-Math.PI / 2),
+      new THREE.MeshStandardMaterial({
+        color: 0x2f6fd0, transparent: true, opacity: 0.62,
+        roughness: 0.15, metalness: 0.0
+      })
+    );
+    water.visible = false;
+    scene.add(water);
+
+    const s = meta.stats;
+    const nB = s.n_buildings ?? meta.buildings.length;
+    rows($("metaRows"), [
+      ["scene", meta.scene],
+      ["CRS", meta.crs],
+      ["GSD", fmt(meta.gsd_m, 3, " m/px")],
+      ["extent", `${SPAN.toFixed(0)} × ${SPAN.toFixed(0)} m`],
+      ["sun elev / az", (meta.sun_elevation_deg != null)
+        ? `${meta.sun_elevation_deg.toFixed(1)}° / ${meta.sun_azimuth_deg.toFixed(1)}°` : null],
+      ["acquired", (meta.acquisition_date || "").slice(0, 10)],
+    ]);
+    rows($("statRows"), [
+      ["method", "shadow geometry"],
+      ["buildings", nB],
+      ["measured from shadow", (s.n_measured != null && nB)
+        ? `${s.n_measured} (${Math.round(100 * s.n_measured / nB)}%)` : null],
+      ["median height", fmt(s.median_height_m, 1, " m")],
+      ["max height", fmt(meta.max_height_m, 1, " m")],
+      ["repeatability MAE", fmt(s.repeatability_mae_m, 2, " m")],
+    ]);
+
+    // Accuracy against independent ground truth. Only rendered when
+    // pipeline.validate has actually been run for this scene -- an empty
+    // "vs LiDAR: --" row would invite exactly the question you can't answer.
+    if (s.lidar_rmse_m != null) {
+      $("lidarPanel").hidden = false;
+      rows($("lidarRows"), [
+        ["reference", "USGS 3DEP LiDAR"],
+        ["coverage", s.lidar_coverage != null
+          ? `${(s.lidar_coverage * 100).toFixed(1)}%` : null],
+        ["buildings compared", s.lidar_n],
+        ["RMSE", fmt(s.lidar_rmse_m, 2, " m")],
+        ["MAE", fmt(s.lidar_mae_m, 2, " m")],
+        ["bias", fmt(s.lidar_bias_m, 2, " m")],
+        ["correlation", fmt(s.lidar_corr, 3)],
+      ]);
+      $("lidarNote").textContent = s.lidar_bias_m != null && s.lidar_bias_m < 0
+        ? "negative bias: shadows measure to the eave, LiDAR to the ridge"
+        : "";
+    }
+
+    const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+    let dragged = false;
+    renderer.domElement.addEventListener("pointerdown", () => (dragged = false));
+    renderer.domElement.addEventListener("pointermove", () => (dragged = true));
+    renderer.domElement.addEventListener("pointerup", ev => {
+      if (dragged) return;
+      ndc.x = (ev.clientX / innerWidth) * 2 - 1;
+      ndc.y = -(ev.clientY / innerHeight) * 2 + 1;
+      ray.setFromCamera(ndc, camera);
+      const hit = ray.intersectObjects([roofMesh, wallMesh])[0];
+      if (!hit) return;
+
+      const u = (hit.point.x / city.scale.x + SPAN / 2) / SPAN;
+      const v = (hit.point.z / city.scale.z + SPAN / 2) / SPAN;
+      const cc = Math.min(N - 1, Math.max(0, Math.floor(u * N)));
+      const rr = Math.min(N - 1, Math.max(0, Math.floor(v * N)));
+      const h = heights[rr * N + cc];
+
+      let near = null, best = 1e9;
+      for (const b of meta.buildings) {
+        const d = (b.x - u) ** 2 + (b.y - v) ** 2;
+        if (d < best) { best = d; near = b; }
+      }
+      const close = (near && Math.sqrt(best) * SPAN < 25) ? near : null;
+
+      $("probeVal").textContent = `${h.toFixed(1)} m`;
+      $("probeSub").innerHTML = h < 0.5 ? "ground level"
+        : close
+          ? `≈ ${(h / 3).toFixed(1)} storeys<br>${close.area ?? "?"} m² footprint` +
+            (close.r != null ? `<br>± ${close.r.toFixed(1)} m repeatability` : "")
+          : `≈ ${(h / 3).toFixed(1)} storeys`;
+    });
+
+    const sorted = Float32Array.from(heights).sort();
+    const maxH = meta.max_height_m ?? 1;
+
+    function applyFlood() {
+      const level = ($("floodRange").value / 100) * maxH;
+      const exag = +$("exagRange").value / 10;
+      water.visible = level > 0.01;
+      water.position.y = level * exag;
+      $("floodLevel").textContent = `${level.toFixed(1)} m`;
+      let lo = 0, hi = sorted.length;
+      while (lo < hi) { const m = (lo + hi) >> 1; sorted[m] < level ? lo = m + 1 : hi = m; }
+      $("floodArea").textContent = `${(100 * lo / sorted.length).toFixed(1)}%`;
+      $("floodBld").textContent = meta.buildings.filter(b => b.h < level).length;
+    }
+
+    $("floodRange").addEventListener("input", applyFlood);
+
+    // Exaggeration is now a transform, not a geometry rebuild — instant,
+    // and the probe still reports true metres because it reads the raw grid.
+    $("exagRange").addEventListener("input", ev => {
+      const exag = +ev.target.value / 10;
+      $("exagVal").textContent = `${exag.toFixed(1)}×`;
+      city.scale.y = exag;
+      applyFlood();
+    });
+
+    addEventListener("resize", () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+
+    $("load").hidden = true;
+    for (const id of ["meta", "probe", "flood"]) $(id).hidden = false;
+
+    (function loop() {
+      requestAnimationFrame(loop);
+      controls.update();
+      renderer.render(scene, camera);
+    })();
+  } catch (e) {
+    fail(`Scene setup failed: <b>${e.message}</b><br><br><i>${e.stack || ""}</i>`);
+  }
+}
+
+main();
+</script>

@@ -1,0 +1,18 @@
+{
+  "scene_id": "Hurricane-Ian-9-26-2022_031331332011",
+  "source_path": "data\\raw\\Hurricane-Ian-9-26-2022_031331332011.tif",
+  "mode": "absolute",
+  "width": 1024,
+  "height": 1024,
+  "crs": "EPSG:32617",
+  "gsd_m": 0.6103515625,
+  "gsd_x_m": 0.6103515625,
+  "gsd_y_m": 0.6103515625,
+  "sun_elevation_deg": 37.3,
+  "sun_azimuth_deg": 158.3,
+  "center_lat": 26.37621343996806,
+  "center_lon": -81.6265164124485,
+  "acquisition_date": "2021-12-27T16:13:03Z",
+  "downsample_factor": 2.0,
+  "metadata_source": "geotiff-tags"
+}

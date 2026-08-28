@@ -1,0 +1,12 @@
+[
+ {
+  "scene": "antakya",
+  "max_height_m": 29.35,
+  "buildings": 167
+ },
+ {
+  "scene": "fm",
+  "max_height_m": 10.82,
+  "buildings": 150
+ }
+]
