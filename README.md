@@ -1,4 +1,4 @@
-# DepthWizard
+# DepthWizards
 
 **Building heights from a single satellite image, using shadow geometry.**
 
