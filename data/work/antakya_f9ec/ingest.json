@@ -1,0 +1,18 @@
+{
+  "scene_id": "antakya_f9ec",
+  "source_path": "D:\\VSCODE\\depthwizard\\data\\raw\\antakya_f9ec.tif",
+  "mode": "absolute",
+  "width": 1024,
+  "height": 1024,
+  "crs": "EPSG:32637",
+  "gsd_m": 0.6103515625,
+  "gsd_x_m": 0.6103515625,
+  "gsd_y_m": 0.6103515625,
+  "sun_elevation_deg": 28.4,
+  "sun_azimuth_deg": 162.0,
+  "center_lat": 36.19502356722289,
+  "center_lon": 36.149862429186484,
+  "acquisition_date": "2022-12-22T08:24:29Z",
+  "downsample_factor": 2.0,
+  "metadata_source": "geotiff-tags"
+}

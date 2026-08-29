@@ -173,7 +173,7 @@ function buildCity(heights, N, SPAN, threshold) {
     wallPos.push(ax, yLow, az, bx, yLow, bz, bx, yHigh, bz,
                  ax, yLow, az, bx, yHigh, bz, ax, yHigh, az);
     // Darker at the base: cheap ambient occlusion, reads as depth.
-    const lo = 0.30, hi = 0.72;
+       const lo = 0.55, hi = 0.95;
     wallCol.push(lo, lo, lo, lo, lo, lo, hi, hi, hi,
                  lo, lo, lo, hi, hi, hi, hi, hi, hi);
   };
@@ -184,11 +184,12 @@ function buildCity(heights, N, SPAN, threshold) {
       const x0 = -half + c * cell, x1 = x0 + cell;
       const z0 = -half + r * cell, z1 = z0 + cell;
 
-      roofPos.push(x0, h, z0, x1, h, z0, x1, h, z1,
-                   x0, h, z0, x1, h, z1, x0, h, z1);
+            // Counter-clockwise seen from above, so the normal points +Y.
+      roofPos.push(x0, h, z0, x1, h, z1, x1, h, z0,
+                   x0, h, z0, x0, h, z1, x1, h, z1);
       const u0 = c / N, u1 = (c + 1) / N, v0 = 1 - r / N, v1 = 1 - (r + 1) / N;
-      roofUv.push(u0, v0, u1, v0, u1, v1,
-                  u0, v0, u1, v1, u0, v1);
+      roofUv.push(u0, v0, u1, v1, u1, v0,
+                  u0, v0, u0, v1, u1, v1);
 
       if (c + 1 < N) {
         const hr = H(r, c + 1), d = h - hr;
