@@ -1,5 +1,5 @@
 {
-  "scene": "antakya",
+  "scene": "antakya_test",
   "method": "shadow-direct (Plan B)",
   "n_buildings": 167,
   "n_measured": 125,

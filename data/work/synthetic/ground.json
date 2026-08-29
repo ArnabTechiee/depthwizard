@@ -1,8 +1,5 @@
 {
   "scene": "synthetic",
   "element_px": 120,
-  "max_building_m": 60.0,
-  "separation_sigma": 4.163014740089638,
-  "correlation_before": 0.25253486406634595,
-  "correlation_after": 0.7014473592881985
+  "max_building_m": 60.0
 }

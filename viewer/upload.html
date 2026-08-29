@@ -1,0 +1,184 @@
+<meta charset="utf-8">
+<title>DepthWizard — upload</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --line:#2a3038; --text:#e6edf3;
+          --dim:#8b949e; --accent:#4dd0a7; --warn:#e3b341; --err:#f85149; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--text); min-height:100vh; padding:40px 24px;
+         font:14px/1.6 ui-monospace,"SF Mono",Menlo,Consolas,monospace; }
+  .wrap { max-width:860px; margin:0 auto; }
+  h1 { font-size:22px; font-weight:600; letter-spacing:-.01em; }
+  .sub { color:var(--dim); margin:6px 0 32px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+          padding:22px; margin-bottom:20px; }
+  h2 { font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+       color:var(--accent); margin-bottom:14px; font-weight:600; }
+  #drop { border:1.5px dashed var(--line); border-radius:10px; padding:44px 20px;
+          text-align:center; cursor:pointer; transition:.15s; }
+  #drop:hover, #drop.over { border-color:var(--accent); background:rgba(77,208,167,.05); }
+  #drop b { color:var(--accent); }
+  .hint { color:var(--dim); font-size:12.5px; margin-top:8px; }
+  .opts { display:flex; gap:20px; flex-wrap:wrap; margin-top:18px; }
+  label { color:var(--dim); font-size:12.5px; display:block; margin-bottom:5px; }
+  select { background:var(--bg); color:var(--text); border:1px solid var(--line);
+           border-radius:6px; padding:7px 10px; font:inherit; font-size:13px; }
+  .bar { height:5px; background:var(--bg); border-radius:3px; overflow:hidden; margin:14px 0 10px; }
+  .fill { height:100%; background:var(--accent); width:0; transition:width .3s; }
+  .stages { display:flex; gap:6px; flex-wrap:wrap; }
+  .stg { font-size:11px; padding:3px 9px; border-radius:4px; background:var(--bg);
+         color:var(--dim); border:1px solid var(--line); }
+  .stg.on { color:var(--accent); border-color:var(--accent); }
+  .stg.ok { color:var(--text); }
+  .row { display:flex; justify-content:space-between; padding:3px 0; }
+  .row span:first-child { color:var(--dim); }
+  a.btn { display:inline-block; margin-top:14px; padding:9px 16px; border-radius:7px;
+          background:var(--accent); color:#06231b; text-decoration:none; font-weight:600; }
+  .scene { display:flex; justify-content:space-between; align-items:center;
+           padding:11px 0; border-bottom:1px solid var(--line); }
+  .scene:last-child { border-bottom:0; }
+  .scene a { color:var(--accent); text-decoration:none; }
+  .warn { color:var(--warn); } .err { color:var(--err); white-space:pre-wrap; font-size:12px; }
+</style>
+
+<div class="wrap">
+  <h1>DepthWizard</h1>
+  <div class="sub">Building heights from a single optical image, by shadow geometry.
+    SIH26175 · ISRO / Space Applications Centre</div>
+
+  <div class="card">
+    <h2>Upload imagery</h2>
+    <div id="drop">
+      <div><b>Drop a GeoTIFF, PNG or JPG</b> — or click to browse</div>
+      <div class="hint">GeoTIFF with CRS and sun metadata → absolute DSM in metres.<br>
+        PNG/JPG without spatial metadata → relative DSM, unitless.</div>
+    </div>
+    <input type="file" id="file" accept=".tif,.tiff,.png,.jpg,.jpeg" hidden>
+    <div class="opts">
+      <div><label>working resolution</label>
+        <select id="maxSize">
+          <option value="1024" selected>1024 px</option>
+          <option value="2048">2048 px — finer, slower</option>
+          <option value="768">768 px — faster</option>
+        </select></div>
+      <div><label>depth backbone</label>
+        <select id="model">
+          <option value="base" selected>Base — recommended</option>
+          <option value="small">Small — faster</option>
+          <option value="large">Large — slowest</option>
+        </select></div>
+      <div><label>min building footprint</label>
+        <select id="minArea">
+          <option value="120" selected>120 m²</option>
+          <option value="80">80 m²</option>
+          <option value="300">300 m²</option>
+        </select></div>
+    </div>
+  </div>
+
+  <div class="card" id="jobCard" hidden>
+    <h2>Processing</h2>
+    <div class="bar"><div class="fill" id="fill"></div></div>
+    <div class="stages" id="stages"></div>
+    <div id="jobInfo" style="margin-top:14px"></div>
+  </div>
+
+  <div class="card">
+    <h2>Scenes</h2>
+    <div id="scenes" class="hint">loading…</div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const STAGES = ["ingest","depth","orient","ground","calibrate","bake"];
+
+$("drop").onclick = () => $("file").click();
+$("drop").ondragover = e => { e.preventDefault(); $("drop").classList.add("over"); };
+$("drop").ondragleave = () => $("drop").classList.remove("over");
+$("drop").ondrop = e => {
+  e.preventDefault(); $("drop").classList.remove("over");
+  if (e.dataTransfer.files[0]) send(e.dataTransfer.files[0]);
+};
+$("file").onchange = e => e.target.files[0] && send(e.target.files[0]);
+
+function drawStages(current, failed) {
+  $("stages").innerHTML = STAGES.map(s => {
+    const i = STAGES.indexOf(s), c = STAGES.indexOf(current);
+    const cls = failed ? "" : (i < c ? "stg ok" : i === c ? "stg on" : "stg");
+    return `<span class="${cls || 'stg'}">${s}</span>`;
+  }).join("");
+}
+
+async function send(file) {
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("max_size", $("maxSize").value);
+  fd.append("model", $("model").value);
+  fd.append("min_area", $("minArea").value);
+
+  $("jobCard").hidden = false;
+  $("jobInfo").innerHTML = `<span class="hint">uploading ${file.name}…</span>`;
+  drawStages("ingest");
+
+  let res;
+  try {
+    res = await (await fetch("/api/scenes", { method: "POST", body: fd })).json();
+  } catch (e) { $("jobInfo").innerHTML = `<div class="err">${e}</div>`; return; }
+  if (res.detail) { $("jobInfo").innerHTML = `<div class="err">${res.detail}</div>`; return; }
+
+  poll(res.job_id);
+}
+
+async function poll(id) {
+  const j = await (await fetch(`/api/jobs/${id}`)).json();
+  $("fill").style.width = `${(j.progress || 0) * 100}%`;
+  drawStages(j.stage, j.status === "error");
+
+  const rows = [];
+  if (j.mode) rows.push(["mode", j.mode.toUpperCase()]);
+  if (j.gsd_m) rows.push(["GSD", `${j.gsd_m.toFixed(3)} m/px`]);
+  if (j.buildings != null) rows.push(["buildings", j.buildings]);
+  if (j.measured != null) rows.push(["measured from shadow", j.measured]);
+  if (j.median_height_m != null) rows.push(["median height", `${j.median_height_m} m`]);
+  if (j.repeatability_mae_m != null) rows.push(["repeatability MAE", `${j.repeatability_mae_m} m`]);
+
+  let html = rows.map(([k, v]) =>
+    `<div class="row"><span>${k}</span><span>${v}</span></div>`).join("");
+
+  if (j.blockers && j.blockers.length)
+    html += `<div class="warn" style="margin-top:10px">relative mode — ${j.blockers.join("; ")}</div>`;
+  if (j.note) html += `<div class="warn" style="margin-top:10px">${j.note}</div>`;
+
+  if (j.status === "error") {
+    html += `<div class="err" style="margin-top:12px">${j.error}</div>`;
+    $("jobInfo").innerHTML = html;
+    return;
+  }
+  if (j.status === "done") {
+    html += `<a class="btn" href="${j.viewer_url}">Open 3D scene →</a>`;
+    $("jobInfo").innerHTML = html;
+    loadScenes();
+    return;
+  }
+  $("jobInfo").innerHTML = html;
+  setTimeout(() => poll(id), 900);
+}
+
+async function loadScenes() {
+  try {
+    const list = await (await fetch("/api/scenes")).json();
+    if (!list.length) { $("scenes").textContent = "no scenes yet"; return; }
+    $("scenes").innerHTML = list.map(s => {
+      const st = s.stats || {};
+      const bits = [];
+      if (st.n_buildings) bits.push(`${st.n_buildings} buildings`);
+      if (s.max_height_m) bits.push(`max ${s.max_height_m} m`);
+      if (st.lidar_rmse_m) bits.push(`RMSE ${st.lidar_rmse_m} m vs LiDAR`);
+      return `<div class="scene"><div><a href="/viewer/?scene=${s.scene}">${s.scene}</a>
+              <div class="hint">${bits.join(" · ")}</div></div>
+              <a href="/api/scenes/${s.scene}/exports">export</a></div>`;
+    }).join("");
+  } catch { $("scenes").textContent = "could not reach the API"; }
+}
+loadScenes();
+</script>

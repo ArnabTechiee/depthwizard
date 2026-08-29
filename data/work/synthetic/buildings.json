@@ -1,0 +1,372 @@
+{
+  "scene": "synthetic",
+  "method": "shadow-direct (Plan B)",
+  "n_buildings": 38,
+  "n_measured": 5,
+  "median_height_m": 1.11,
+  "max_height_m": 1.39,
+  "fallback_height_m": 1.11,
+  "roof_pitch_deg": 22.6,
+  "median_roof_rise_m": 4.0,
+  "repeatability_mae_m": 0.22,
+  "repeatability_rmse_m": 0.35,
+  "buildings": [
+    {
+      "id": 1,
+      "row": 563.3069418917008,
+      "col": 368.0053018521137,
+      "area_m2": 3536.5,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 2,
+      "row": 579.3610139033387,
+      "col": 679.6563889151613,
+      "area_m2": 2643.2,
+      "height_m": 1.11,
+      "n_rays": 6,
+      "method": "shadow",
+      "ridge_m": 5.11,
+      "roof_rise_m": 4.0,
+      "repeatability_m": 0.0
+    },
+    {
+      "id": 3,
+      "row": 318.4803042121685,
+      "col": 189.07127535101404,
+      "area_m2": 2564.0,
+      "height_m": 1.11,
+      "n_rays": 1,
+      "method": "median-fill"
+    },
+    {
+      "id": 4,
+      "row": 446.2104961832061,
+      "col": 826.0902671755725,
+      "area_m2": 2620.0,
+      "height_m": 1.11,
+      "n_rays": 6,
+      "method": "shadow",
+      "ridge_m": 5.11,
+      "roof_rise_m": 4.0,
+      "repeatability_m": 0.56
+    },
+    {
+      "id": 5,
+      "row": 321.21610355419045,
+      "col": 641.167068889864,
+      "area_m2": 2279.0,
+      "height_m": 1.11,
+      "n_rays": 12,
+      "method": "shadow",
+      "ridge_m": 5.11,
+      "roof_rise_m": 4.0,
+      "repeatability_m": 0.0
+    },
+    {
+      "id": 6,
+      "row": 723.2695473251028,
+      "col": 175.30648638056044,
+      "area_m2": 2551.5,
+      "height_m": 1.39,
+      "n_rays": 46,
+      "method": "shadow",
+      "ridge_m": 5.39,
+      "roof_rise_m": 4.0,
+      "repeatability_m": 0.56
+    },
+    {
+      "id": 7,
+      "row": 142.32866398178953,
+      "col": 436.96848187707934,
+      "area_m2": 2855.5,
+      "height_m": 1.11,
+      "n_rays": 1,
+      "method": "median-fill"
+    },
+    {
+      "id": 8,
+      "row": 140.99750291326785,
+      "col": 171.38604960878973,
+      "area_m2": 1501.8,
+      "height_m": 1.11,
+      "n_rays": 35,
+      "method": "shadow",
+      "ridge_m": 5.11,
+      "roof_rise_m": 4.0,
+      "repeatability_m": 0.0
+    },
+    {
+      "id": 9,
+      "row": 65.0609053932703,
+      "col": 933.6449210290001,
+      "area_m2": 4732.8,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 10,
+      "row": 967.0,
+      "col": 182.0,
+      "area_m2": 861.2,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 11,
+      "row": 965.013304025914,
+      "col": 90.59208699676076,
+      "area_m2": 2161.0,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 12,
+      "row": 967.5949958757218,
+      "col": 236.91806433874072,
+      "area_m2": 909.2,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 13,
+      "row": 968.5307527903111,
+      "col": 299.2973165518879,
+      "area_m2": 1052.8,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 14,
+      "row": 969.137030812325,
+      "col": 406.47103641456584,
+      "area_m2": 2231.2,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 15,
+      "row": 970.0,
+      "col": 597.0,
+      "area_m2": 1342.2,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 16,
+      "row": 969.9928400954653,
+      "col": 515.991646778043,
+      "area_m2": 1047.5,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 17,
+      "row": 968.0675697211155,
+      "col": 890.1313147410359,
+      "area_m2": 1568.8,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 18,
+      "row": 970.108708189158,
+      "col": 807.9250288350635,
+      "area_m2": 867.0,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 19,
+      "row": 970.3351383874849,
+      "col": 670.781889290012,
+      "area_m2": 831.0,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 20,
+      "row": 970.6253014689761,
+      "col": 739.3170357377768,
+      "area_m2": 1140.2,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 21,
+      "row": 911.2442194092827,
+      "col": 16.629704641350212,
+      "area_m2": 1481.2,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 22,
+      "row": 898.2448729721457,
+      "col": 972.2904805632078,
+      "area_m2": 1633.5,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 23,
+      "row": 26.435783692437685,
+      "col": 353.22348964934514,
+      "area_m2": 2367.0,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 24,
+      "row": 24.671282360024083,
+      "col": 247.11619506321492,
+      "area_m2": 415.2,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 25,
+      "row": 24.0,
+      "col": 215.5,
+      "area_m2": 367.5,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 26,
+      "row": 24.450569476082006,
+      "col": 178.29612756264237,
+      "area_m2": 548.8,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 27,
+      "row": 25.008637873754154,
+      "col": 126.99036544850499,
+      "area_m2": 752.5,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 28,
+      "row": 30.61345514950166,
+      "col": 45.3687707641196,
+      "area_m2": 1505.0,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 29,
+      "row": 23.399020058184046,
+      "col": 570.9162455979176,
+      "area_m2": 3265.5,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 30,
+      "row": 765.130207285168,
+      "col": 979.5415576574763,
+      "area_m2": 1242.2,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 31,
+      "row": 514.7170698924731,
+      "col": 982.1942204301075,
+      "area_m2": 744.0,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 32,
+      "row": 600.2831325301205,
+      "col": 982.1251673360107,
+      "area_m2": 747.0,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 33,
+      "row": 386.3160243407708,
+      "col": 986.0557809330629,
+      "area_m2": 1232.5,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 34,
+      "row": 671.1856516976999,
+      "col": 983.1829134720701,
+      "area_m2": 456.5,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 35,
+      "row": 20.809244126659856,
+      "col": 759.6197650663943,
+      "area_m2": 979.0,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 36,
+      "row": 240.67031820552947,
+      "col": 987.4407929055816,
+      "area_m2": 479.2,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 37,
+      "row": 764.9114077669902,
+      "col": 10.993122977346278,
+      "area_m2": 618.0,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 38,
+      "row": 641.6840420667581,
+      "col": 7.529949702789209,
+      "area_m2": 546.8,
+      "height_m": 1.11,
+      "n_rays": 0,
+      "method": "median-fill"
+    }
+  ]
+}

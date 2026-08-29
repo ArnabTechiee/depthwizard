@@ -1,6 +1,6 @@
 {
   "scene_id": "synthetic",
-  "source_path": "data\\raw\\synthetic.tif",
+  "source_path": "D:\\VSCODE\\depthwizard\\data\\raw\\synthetic.tif",
   "mode": "absolute",
   "width": 1000,
   "height": 1000,

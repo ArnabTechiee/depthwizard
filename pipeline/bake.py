@@ -88,11 +88,21 @@ def run(scene: str, work_root: Path, out_root: Path, grid: int) -> dict:
         stats["lidar_source"] = v.get("lidar_source")
         stats["lidar_coverage"] = v.get("dsm_coverage")
 
+    # A non-georeferenced image has no GSD, so there is no metre scale to
+    # report. Fall back to 1 unit per pixel and flag the scene as relative:
+    # the viewer must not present unitless numbers as metres.
+    gsd = meta.get("gsd_m")
+    is_relative = gsd is None
+    if is_relative:
+        gsd = 1.0
+
     payload = {
         "scene": scene,
         "grid": grid,
-        "gsd_m": meta["gsd_m"],
-        "span_m": round(meta["gsd_m"] * heights.shape[1], 1),
+        "relative": is_relative,
+        "units": "relative" if is_relative else "m",
+        "gsd_m": None if is_relative else meta["gsd_m"],
+        "span_m": round(gsd * heights.shape[1], 1),
         "crs": meta["crs"],
         "sun_elevation_deg": meta["sun_elevation_deg"],
         "sun_azimuth_deg": meta["sun_azimuth_deg"],
@@ -105,7 +115,8 @@ def run(scene: str, work_root: Path, out_root: Path, grid: int) -> dict:
 
     print(f"  {scene}")
     print(f"    grid       : {grid} x {grid}  ({grid * grid} vertices)")
-    print(f"    span       : {payload['span_m']} m across")
+    print(f"    span       : {payload['span_m']} "
+          f"{'units' if is_relative else 'm'} across")
     print(f"    max height : {payload['max_height_m']} m")
     print(f"    buildings  : {len(buildings)}")
     if validation_line:

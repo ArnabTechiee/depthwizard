@@ -1,6 +1,6 @@
 {
-  "scene_id": "antakya",
-  "source_path": "D:\\VSCODE\\depthwizard\\data\\raw\\antakya.tif",
+  "scene_id": "antakya_test",
+  "source_path": "D:\\VSCODE\\depthwizard\\data\\raw\\antakya_test.tif",
   "mode": "absolute",
   "width": 1024,
   "height": 1024,

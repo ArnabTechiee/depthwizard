@@ -1,6 +1,8 @@
 {
  "scene": "fm",
  "grid": 512,
+ "relative": false,
+ "units": "m",
  "gsd_m": 0.30517578125,
  "span_m": 625.0,
  "crs": "EPSG:32617",

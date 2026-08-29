@@ -1,6 +1,8 @@
 {
  "scene": "antakya",
  "grid": 512,
+ "relative": false,
+ "units": "m",
  "gsd_m": 0.6103515625,
  "span_m": 625.0,
  "crs": "EPSG:32637",
@@ -16,6 +18,8 @@
   "median_height_m": 9.03,
   "max_height_m": 29.35,
   "fallback_height_m": 9.03,
+  "roof_pitch_deg": 22.6,
+  "median_roof_rise_m": 4.0,
   "repeatability_mae_m": 3.02,
   "repeatability_rmse_m": 4.99
  },
