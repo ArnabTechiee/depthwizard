@@ -153,8 +153,8 @@ function buildCity(heights, N, SPAN, threshold) {
       const x0 = -half + c * cell, x1 = x0 + cell;
       const z0 = -half + r * cell, z1 = z0 + cell;
 
-      roofPos.push(x0, h, z0, x1, h, z1, x1, h, z0,
-             x0, h, z0, x0, h, z1, x1, h, z1);
+      roofPos.push(x0, h, z0, x1, h, z0, x1, h, z1,
+                   x0, h, z0, x1, h, z1, x0, h, z1);
       const u0 = c / N, u1 = (c + 1) / N, v0 = 1 - r / N, v1 = 1 - (r + 1) / N;
       roofUv.push(u0, v0, u1, v0, u1, v1,
                   u0, v0, u1, v1, u0, v1);
@@ -284,11 +284,17 @@ async function main() {
 
     const s = meta.stats;
     const nB = s.n_buildings ?? meta.buildings.length;
+    // A non-georeferenced image yields a relative DSM. Showing "m" on
+    // unitless numbers would be a straightforward lie, so switch the unit.
+    const U = meta.relative ? "" : " m";
+    const relNote = meta.relative
+      ? "relative DSM — no spatial metadata, values are unitless" : null;
     rows($("metaRows"), [
       ["scene", meta.scene],
       ["CRS", meta.crs],
       ["GSD", fmt(meta.gsd_m, 3, " m/px")],
-      ["extent", `${SPAN.toFixed(0)} × ${SPAN.toFixed(0)} m`],
+      ["extent", `${SPAN.toFixed(0)} × ${SPAN.toFixed(0)}${U || " units"}`],
+      ["units", relNote ? "relative (unitless)" : "metres"],
       ["sun elev / az", (meta.sun_elevation_deg != null)
         ? `${meta.sun_elevation_deg.toFixed(1)}° / ${meta.sun_azimuth_deg.toFixed(1)}°` : null],
       ["acquired", (meta.acquisition_date || "").slice(0, 10)],
@@ -298,9 +304,9 @@ async function main() {
       ["buildings", nB],
       ["measured from shadow", (s.n_measured != null && nB)
         ? `${s.n_measured} (${Math.round(100 * s.n_measured / nB)}%)` : null],
-      ["median height", fmt(s.median_height_m, 1, " m")],
-      ["max height", fmt(meta.max_height_m, 1, " m")],
-      ["repeatability MAE", fmt(s.repeatability_mae_m, 2, " m")],
+      ["median height", fmt(s.median_height_m, 1, U)],
+      ["max height", fmt(meta.max_height_m, 1, U)],
+      ["repeatability MAE", fmt(s.repeatability_mae_m, 2, U)],
     ]);
 
     // Accuracy against independent ground truth. Only rendered when
@@ -348,8 +354,10 @@ async function main() {
       }
       const close = (near && Math.sqrt(best) * SPAN < 25) ? near : null;
 
-      $("probeVal").textContent = `${h.toFixed(1)} m`;
-      $("probeSub").innerHTML = h < 0.5 ? "ground level"
+      $("probeVal").textContent = `${h.toFixed(1)}${U || ""}`;
+      $("probeSub").innerHTML = meta.relative
+        ? "relative height (unitless)"
+        : h < 0.5 ? "ground level"
         : close
           ? `≈ ${(h / 3).toFixed(1)} storeys<br>${close.area ?? "?"} m² footprint` +
             (close.r != null ? `<br>± ${close.r.toFixed(1)} m repeatability` : "")

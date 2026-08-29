@@ -96,6 +96,8 @@ requirement rather than a hidden compromise.
 | Metric calibration | `pipeline.planb` | Per-building shadow heights, eave and ridge |
 | Validation | `pipeline.validate` | RMSE / MAE / bias vs LiDAR point cloud |
 | Bake | `pipeline.bake` | Static viewer assets |
+| Export | `pipeline.export` | GeoTIFF, OBJ mesh, CSV table, heatmap, metrics |
+| Service | `app.py` | Upload API, background jobs, scene library |
 | Viewer | `viewer/index.html` | Textured 3D scene, height probe, flood model |
 
 ---
@@ -113,6 +115,67 @@ pip install -r requirements.txt
 Windows note: if `pip install rasterio` fails, use
 `conda install -c conda-forge rasterio` or a wheel from
 [cgohlke/geospatial-wheels](https://github.com/cgohlke/geospatial-wheels).
+
+## Running it as an application
+
+The pipeline also runs as a service, so imagery can be dropped in the browser
+rather than passed through the CLI:
+
+```bash
+pip install fastapi "uvicorn[standard]" python-multipart
+uvicorn app:app --host 0.0.0.0 --port 8000
+```
+
+Open `http://localhost:8000`. Drag in a GeoTIFF, PNG or JPG; the six pipeline
+stages run in a background job with live progress, and the result opens
+directly in the 3D viewer.
+
+Both input modes required by the PS are handled:
+
+- **GeoTIFF** with CRS and sun metadata → absolute DSM, heights in metres
+- **PNG/JPG** with no spatial metadata → relative DSM (rDSM), unitless
+
+The viewer switches its unit labels for relative scenes and states
+`relative (unitless)` rather than printing metres, because without a GSD there
+is no metre scale to report and presenting one would be false.
+
+The depth backbone loads once at startup, not per request — it is ~390 MB, so
+reloading per upload would dominate response time. The first upload after a
+restart is therefore slower than the rest.
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /api/scenes` | Upload imagery, start a pipeline job |
+| `GET /api/jobs/{id}` | Stage, progress and live metrics |
+| `GET /api/scenes` | Scene library with stats |
+| `GET /api/scenes/{s}/exports` | Generate the standard-format deliverables |
+| `GET /api/health` | Liveness and whether the model is resident |
+
+## Standard-format exports
+
+```bash
+python -m pipeline.export antakya fm --mesh-stride 4
+```
+
+Writes to `exports/<scene>/`:
+
+| File | Contents |
+|---|---|
+| `*_ndsm_eave.tif` | CRS-tagged float32 GeoTIFF, height to eave, metres |
+| `*_ndsm_ridge.tif` | Same with the roof-pitch correction applied |
+| `*_ndsm_ref.tif` | LiDAR reference nDSM, where validation has been run |
+| `*_buildings.csv` | Per-building table in projected coordinates |
+| `*_mesh.obj` + `.mtl` | Textured mesh with real vertical walls |
+| `*_heatmap.png` | Quick-look colour render |
+| `*_metrics.json` | Accuracy figures in one place |
+
+The rasters carry **height above local ground**, not absolute elevation above a
+vertical datum. That is what the method measures, it is datum-independent, and
+it is what building-height analysis needs — so it is written into the GeoTIFF
+tags as `SURFACE_TYPE` rather than left for a downstream user to guess.
+
+Building centroids in the CSV are converted through the geotransform into real
+easting/northing, so the table joins directly against other GIS layers.
 
 ## For team members
 
@@ -238,6 +301,11 @@ fails loudly rather than silently succeeding on a developer machine.
   appears to begin. Tiles are filtered to low off-nadir where possible.
 - **Antakya has no ground truth.** That scene reports repeatability
   (a precision measure), not accuracy.
+- **Pipeline stages do not detect stale input.** Each reads the previous
+  stage's output from disk; skipping one silently reuses old data and produces
+  plausible but wrong numbers rather than failing. Run stages in order, and
+  check that the building count in `planb` matches the `n` reported by
+  `validate`.
 
 ## Out of scope
 
