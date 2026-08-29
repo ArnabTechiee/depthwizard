@@ -56,6 +56,34 @@ residential pitch over each building's own short span) reduces bias from
 −2.89 m to −0.22 m. The prior is geometric and is *not* fitted to the
 reference data.
 
+### Stability across terrain
+
+The rubric grades performance across urban, sparse, hilly and forested
+landscapes, so a single headline figure does not answer it. Full table:
+[`docs/stratification.md`](docs/stratification.md).
+
+| Scene | Terrain | Buildings | Measured | Median h | Repeat. MAE | vs LiDAR |
+|---|---|---|---|---|---|---|
+| `antakya` | urban | 167 | 125 (75%) | 9.0 m | 3.02 m | — |
+| `fm` | suburban | 150 | 106 (71%) | 2.4 m | 0.75 m | 3.66 m |
+| `atlas` | hilly | 50 | 18 (36%) | 6.5 m | 1.54 m | — |
+| `ian_forest` | forested | 304 | 48 (16%) | 6.2 m | 2.30 m | — |
+| `ian2` | sparse | 110 | 1 (1%) | — | — | — |
+
+Degradation is monotonic and each step has a physical cause. A second signal
+is cleaner still — the nDSM spread left standing after ground separation:
+0.459 on urban and 0.433 on suburban, against 0.125 on hilly and 0.151 on
+forested. Where real structure exists the decomposition leaves something above
+ground; where it does not, it leaves almost nothing.
+
+Two honest caveats. On `atlas` and `ian_forest` most detections are **false
+positives** — the shadow mask cannot distinguish a terrain shadow or a canopy
+gap from a building's cast shadow, so boulders, cliff edges and tree crowns are
+measured as structures. The fix is semantic segmentation masking non-building
+regions before measurement, which is not yet built. And `ian2` measured exactly
+one building, so its repeatability figure is statistically meaningless and
+should not be quoted.
+
 ---
 
 ## Approach, and one thing that did not work
@@ -96,6 +124,7 @@ requirement rather than a hidden compromise.
 | Metric calibration | `pipeline.planb` | Per-building shadow heights, eave and ridge |
 | Validation | `pipeline.validate` | RMSE / MAE / bias vs LiDAR point cloud |
 | Bake | `pipeline.bake` | Static viewer assets |
+| Stratify | `pipeline.stratify` | Per-terrain-class comparison report |
 | Export | `pipeline.export` | GeoTIFF, OBJ mesh, CSV table, heatmap, metrics |
 | Service | `app.py` | Upload API, background jobs, scene library |
 | Viewer | `viewer/index.html` | Textured 3D scene, height probe, flood model |
@@ -200,6 +229,13 @@ python -m pipeline.planb       fm      --min-area 120
 python -m pipeline.bake        antakya fm --grid 512
 ```
 
+All five terrain scenes, and the stratification report:
+
+```bash
+python -m pipeline.stratify --label antakya=urban fm=suburban atlas=hilly \
+       ian2=sparse ian_forest=forested --out docs/stratification.md
+```
+
 Every stage reads the previous stage's output from disk, so **skipping one
 silently reuses stale data** rather than failing. Run them in order.
 
@@ -297,10 +333,18 @@ fails loudly rather than silently succeeding on a developer machine.
   shadow. Re-ingesting at native 0.305 m/px improved measured coverage from 63%
   to 71% and halved repeatability RMSE. The fix is finer imagery, not a better
   model.
+- **First-person navigation is available** via the Orbit/Walk toggle, but the
+  footprint segmentation over-splits dense blocks into narrow strips, which is
+  visible from rooftop level. Street level looks correct.
 - **Off-nadir imagery causes building lean**, displacing where each shadow
   appears to begin. Tiles are filtered to low off-nadir where possible.
 - **Antakya has no ground truth.** That scene reports repeatability
-  (a precision measure), not accuracy.
+  (a precision measure), not accuracy. Only Fort Myers sits inside US LiDAR
+  coverage, so four of five terrain classes have precision figures but no
+  accuracy figures.
+- **Terrain and canopy shadows are measured as buildings.** The shadow mask is
+  photometric; it has no notion of what cast the shadow. On bare mountainside
+  and mangrove this produces large false-positive counts.
 - **Pipeline stages do not detect stale input.** Each reads the previous
   stage's output from disk; skipping one silently reuses old data and produces
   plausible but wrong numbers rather than failing. Run stages in order, and
