@@ -1,0 +1,9 @@
+{
+  "scene": "ian_forest",
+  "orientation": 1,
+  "raw_min": 2.080939531326294,
+  "raw_max": 6.166897773742676,
+  "p1": 2.4143341183662415,
+  "p99": 5.8342297077178955,
+  "correlation_vs_truth": null
+}

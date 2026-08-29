@@ -1,6 +1,6 @@
 {
  "scene": "fm",
- "grid": 512,
+ "grid": 384,
  "relative": false,
  "units": "m",
  "gsd_m": 0.30517578125,

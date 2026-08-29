@@ -1,0 +1,9 @@
+{
+  "scene": "atlas",
+  "orientation": 1,
+  "raw_min": 2.1829423904418945,
+  "raw_max": 7.359208583831787,
+  "p1": 2.4610910415649414,
+  "p99": 6.944172501564026,
+  "correlation_vs_truth": null
+}

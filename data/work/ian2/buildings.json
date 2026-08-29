@@ -1,0 +1,1008 @@
+{
+  "scene": "ian2",
+  "method": "shadow-direct (Plan B)",
+  "n_buildings": 110,
+  "n_measured": 1,
+  "median_height_m": 3.61,
+  "max_height_m": 3.61,
+  "fallback_height_m": 3.61,
+  "roof_pitch_deg": 22.6,
+  "median_roof_rise_m": 4.0,
+  "repeatability_mae_m": 3.2,
+  "repeatability_rmse_m": 3.2,
+  "buildings": [
+    {
+      "id": 1,
+      "row": 22.65101329265635,
+      "col": 122.51961211592939,
+      "area_m2": 3419.1,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 2,
+      "row": 22.922279792746114,
+      "col": 295.5876257238647,
+      "area_m2": 2444.5,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 3,
+      "row": 327.9745473628969,
+      "col": 14.718971398583049,
+      "area_m2": 1419.7,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 4,
+      "row": 30.404957102001905,
+      "col": 373.6101048617731,
+      "area_m2": 1953.9,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 5,
+      "row": 218.49420289855072,
+      "col": 26.356728778467907,
+      "area_m2": 1799.3,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 6,
+      "row": 117.4734756768655,
+      "col": 21.583755227823023,
+      "area_m2": 1692.4,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 7,
+      "row": 179.36507936507937,
+      "col": 8.902777777777779,
+      "area_m2": 187.8,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 8,
+      "row": 997.1126736983091,
+      "col": 248.71488364306043,
+      "area_m2": 2225.1,
+      "height_m": 3.61,
+      "n_rays": 16,
+      "method": "shadow",
+      "ridge_m": 7.61,
+      "roof_rise_m": 4.0,
+      "repeatability_m": 3.2
+    },
+    {
+      "id": 9,
+      "row": 388.53068016362755,
+      "col": 437.54780558829646,
+      "area_m2": 5373.0,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 10,
+      "row": 365.0327281137967,
+      "col": 161.73482132531512,
+      "area_m2": 3221.3,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 11,
+      "row": 76.13213659063301,
+      "col": 1000.1572411931435,
+      "area_m2": 2760.1,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 12,
+      "row": 320.70332609059,
+      "col": 576.5590840715361,
+      "area_m2": 2228.8,
+      "height_m": 3.61,
+      "n_rays": 1,
+      "method": "median-fill"
+    },
+    {
+      "id": 13,
+      "row": 224.49269993462627,
+      "col": 625.1645238614077,
+      "area_m2": 1709.5,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 14,
+      "row": 196.5815879201169,
+      "col": 562.0764734534827,
+      "area_m2": 764.8,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 15,
+      "row": 164.96872284969592,
+      "col": 499.940631335071,
+      "area_m2": 1286.3,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 16,
+      "row": 442.29653401797174,
+      "col": 1001.8267008985879,
+      "area_m2": 290.2,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 17,
+      "row": 207.51663570342848,
+      "col": 351.9260260091201,
+      "area_m2": 2205.7,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 18,
+      "row": 499.1629867523083,
+      "col": 1011.7109594540345,
+      "area_m2": 928.0,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 19,
+      "row": 237.00631113916063,
+      "col": 145.95771536762385,
+      "area_m2": 1180.5,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 20,
+      "row": 387.97773352643014,
+      "col": 986.5894279507603,
+      "area_m2": 2057.9,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 21,
+      "row": 966.4732401792776,
+      "col": 455.14113718252923,
+      "area_m2": 4239.0,
+      "height_m": 3.61,
+      "n_rays": 1,
+      "method": "median-fill"
+    },
+    {
+      "id": 22,
+      "row": 81.09567198177676,
+      "col": 423.1518602885345,
+      "area_m2": 490.6,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 23,
+      "row": 151.67668008671416,
+      "col": 222.01176834933415,
+      "area_m2": 1202.9,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 24,
+      "row": 116.70978120978121,
+      "col": 448.72522522522524,
+      "area_m2": 578.9,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 25,
+      "row": 69.68100358422939,
+      "col": 41.300477897252094,
+      "area_m2": 1247.2,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 26,
+      "row": 163.48657718120805,
+      "col": 179.03187919463087,
+      "area_m2": 222.0,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 27,
+      "row": 187.30375647668393,
+      "col": 159.1729274611399,
+      "area_m2": 575.2,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 28,
+      "row": 293.5507042253521,
+      "col": 472.53802816901407,
+      "area_m2": 793.5,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 29,
+      "row": 467.0414680648236,
+      "col": 55.79869717190976,
+      "area_m2": 2344.7,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 30,
+      "row": 789.5703230148049,
+      "col": 697.1672274562584,
+      "area_m2": 1107.2,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 31,
+      "row": 295.7551266586249,
+      "col": 382.12786489746685,
+      "area_m2": 617.7,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 32,
+      "row": 296.9518855656697,
+      "col": 428.42717815344605,
+      "area_m2": 572.9,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 33,
+      "row": 826.3694507148232,
+      "col": 514.5032605969401,
+      "area_m2": 2970.5,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 34,
+      "row": 148.39282250242482,
+      "col": 283.2415130940834,
+      "area_m2": 768.2,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 35,
+      "row": 800.2146747837231,
+      "col": 588.6203140019225,
+      "area_m2": 1162.7,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 36,
+      "row": 807.3086325439267,
+      "col": 679.635217723453,
+      "area_m2": 975.3,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 37,
+      "row": 297.18321848398864,
+      "col": 643.8261045804621,
+      "area_m2": 919.0,
+      "height_m": 3.61,
+      "n_rays": 3,
+      "method": "median-fill"
+    },
+    {
+      "id": 38,
+      "row": 746.0884009009009,
+      "col": 852.038475975976,
+      "area_m2": 1984.8,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 39,
+      "row": 929.4855541181544,
+      "col": 427.9706770159552,
+      "area_m2": 863.9,
+      "height_m": 3.61,
+      "n_rays": 2,
+      "method": "median-fill"
+    },
+    {
+      "id": 40,
+      "row": 442.06657718120806,
+      "col": 775.0269798657719,
+      "area_m2": 2775.3,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 41,
+      "row": 877.3941193941193,
+      "col": 446.2206712206712,
+      "area_m2": 1254.3,
+      "height_m": 3.61,
+      "n_rays": 3,
+      "method": "median-fill"
+    },
+    {
+      "id": 42,
+      "row": 545.0705760249092,
+      "col": 157.5376232485729,
+      "area_m2": 717.9,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 43,
+      "row": 346.58734525447045,
+      "col": 813.5469967904631,
+      "area_m2": 812.5,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 44,
+      "row": 34.510137344669715,
+      "col": 486.9736756049706,
+      "area_m2": 2278.4,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 45,
+      "row": 1014.9074074074074,
+      "col": 16.512345679012345,
+      "area_m2": 241.4,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 46,
+      "row": 725.1571495988674,
+      "col": 755.784332232185,
+      "area_m2": 789.4,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 47,
+      "row": 890.9484640771769,
+      "col": 188.06092916984005,
+      "area_m2": 1467.4,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 48,
+      "row": 759.696542893726,
+      "col": 980.2300469483569,
+      "area_m2": 872.8,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 49,
+      "row": 756.9095519864751,
+      "col": 932.6500422654269,
+      "area_m2": 440.7,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 50,
+      "row": 819.25350233489,
+      "col": 458.00333555703804,
+      "area_m2": 558.4,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 51,
+      "row": 128.94342523316593,
+      "col": 611.8899251819207,
+      "area_m2": 3634.8,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 52,
+      "row": 769.2455123202141,
+      "col": 217.90835098673207,
+      "area_m2": 3341.2,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 53,
+      "row": 356.05948851000744,
+      "col": 244.61536323202373,
+      "area_m2": 4020.3,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 54,
+      "row": 624.690459487899,
+      "col": 44.527709575587515,
+      "area_m2": 2124.2,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 55,
+      "row": 928.1723818350324,
+      "col": 96.24745134383689,
+      "area_m2": 1205.9,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 56,
+      "row": 867.6762843068262,
+      "col": 127.75510204081633,
+      "area_m2": 1058.7,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 57,
+      "row": 741.1628798248015,
+      "col": 376.7122912674514,
+      "area_m2": 1360.8,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 58,
+      "row": 716.8962452788269,
+      "col": 308.98089313485895,
+      "area_m2": 1676.8,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 59,
+      "row": 588.4453340333378,
+      "col": 711.1798136238351,
+      "area_m2": 2838.3,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 60,
+      "row": 841.8083261058109,
+      "col": 797.0581092801388,
+      "area_m2": 429.5,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 61,
+      "row": 972.5031152647975,
+      "col": 21.832554517133957,
+      "area_m2": 478.3,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 62,
+      "row": 796.5313840155945,
+      "col": 57.98167641325536,
+      "area_m2": 955.5,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 63,
+      "row": 776.3985963649451,
+      "col": 150.11319057045168,
+      "area_m2": 2070.1,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 64,
+      "row": 270.1756210283073,
+      "col": 946.7325245522819,
+      "area_m2": 1289.7,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 65,
+      "row": 587.3404592240697,
+      "col": 398.88281868566906,
+      "area_m2": 470.5,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 66,
+      "row": 829.0354916067146,
+      "col": 138.8661870503597,
+      "area_m2": 776.7,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 67,
+      "row": 109.49917808219178,
+      "col": 783.5287671232877,
+      "area_m2": 679.9,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 68,
+      "row": 531.9157681940701,
+      "col": 539.5562668463612,
+      "area_m2": 1105.7,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 70,
+      "row": 227.85027414593,
+      "col": 855.271615352172,
+      "area_m2": 883.3,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 71,
+      "row": 141.71963138788047,
+      "col": 834.7282881876571,
+      "area_m2": 1334.0,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 72,
+      "row": 896.1785356068204,
+      "col": 1001.963891675025,
+      "area_m2": 371.4,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 73,
+      "row": 102.19590643274854,
+      "col": 735.6023391812865,
+      "area_m2": 637.0,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 74,
+      "row": 759.9148936170212,
+      "col": 608.3682487725041,
+      "area_m2": 227.6,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 75,
+      "row": 350.86217616580313,
+      "col": 933.0668393782383,
+      "area_m2": 719.0,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 76,
+      "row": 40.87307197943445,
+      "col": 638.4723650385604,
+      "area_m2": 1159.3,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 77,
+      "row": 670.452694364459,
+      "col": 311.03763883175645,
+      "area_m2": 1811.2,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 78,
+      "row": 329.54084625052366,
+      "col": 898.5165479681609,
+      "area_m2": 889.2,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 79,
+      "row": 612.1171729696218,
+      "col": 483.12523248605083,
+      "area_m2": 600.9,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 80,
+      "row": 741.9705497382199,
+      "col": 78.05759162303664,
+      "area_m2": 569.2,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 81,
+      "row": 764.3217205138186,
+      "col": 443.799922148696,
+      "area_m2": 1914.1,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 82,
+      "row": 743.32874617737,
+      "col": 522.8399592252804,
+      "area_m2": 730.9,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 83,
+      "row": 757.2719173200285,
+      "col": 566.7045616535994,
+      "area_m2": 1045.3,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 84,
+      "row": 851.1995192307693,
+      "col": 31.02403846153846,
+      "area_m2": 309.9,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 85,
+      "row": 898.066493955095,
+      "col": 932.4529360967185,
+      "area_m2": 862.8,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 86,
+      "row": 883.8133518776078,
+      "col": 863.7847009735744,
+      "area_m2": 1339.2,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 87,
+      "row": 697.3212627669452,
+      "col": 88.34168987929434,
+      "area_m2": 401.2,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 88,
+      "row": 696.0659107016301,
+      "col": 193.29978738483345,
+      "area_m2": 1576.9,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 89,
+      "row": 174.90212264150944,
+      "col": 907.9422169811321,
+      "area_m2": 631.8,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 90,
+      "row": 695.126786537575,
+      "col": 395.92070078377134,
+      "area_m2": 808.0,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 91,
+      "row": 353.1936101013966,
+      "col": 704.2412473694279,
+      "area_m2": 1947.2,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 92,
+      "row": 211.97334602570206,
+      "col": 782.8862446454069,
+      "area_m2": 782.7,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 93,
+      "row": 79.14802896218825,
+      "col": 687.8567980691874,
+      "area_m2": 463.1,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 94,
+      "row": 725.0904021132961,
+      "col": 466.78338714411507,
+      "area_m2": 1269.2,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 95,
+      "row": 581.2879291251385,
+      "col": 96.0531561461794,
+      "area_m2": 336.4,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 96,
+      "row": 569.8625509609784,
+      "col": 47.98602213162493,
+      "area_m2": 639.6,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 97,
+      "row": 476.2242295430393,
+      "col": 669.3506907545164,
+      "area_m2": 350.5,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 98,
+      "row": 437.22165820642977,
+      "col": 685.8223350253808,
+      "area_m2": 220.2,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 99,
+      "row": 536.3780952380953,
+      "col": 646.1123809523809,
+      "area_m2": 391.2,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 101,
+      "row": 414.3325,
+      "col": 695.6175,
+      "area_m2": 149.0,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 102,
+      "row": 634.5033453422542,
+      "col": 212.91147709727227,
+      "area_m2": 723.8,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 103,
+      "row": 174.6432664756447,
+      "col": 741.2736389684814,
+      "area_m2": 260.0,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 104,
+      "row": 604.1081492764661,
+      "col": 171.06245239908606,
+      "area_m2": 489.1,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 105,
+      "row": 888.7012987012987,
+      "col": 501.6744588744589,
+      "area_m2": 430.3,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 106,
+      "row": 701.5986928104575,
+      "col": 717.9686274509804,
+      "area_m2": 285.0,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 108,
+      "row": 572.9113300492611,
+      "col": 15.910098522167488,
+      "area_m2": 302.5,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 109,
+      "row": 650.3007425742575,
+      "col": 247.82611386138615,
+      "area_m2": 602.0,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 110,
+      "row": 574.1112224448898,
+      "col": 489.06012024048096,
+      "area_m2": 371.8,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 111,
+      "row": 491.12263575350823,
+      "col": 250.5698596705308,
+      "area_m2": 610.6,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 112,
+      "row": 551.6278118609407,
+      "col": 230.95705521472394,
+      "area_m2": 182.2,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    },
+    {
+      "id": 113,
+      "row": 856.9672268907563,
+      "col": 714.0773109243697,
+      "area_m2": 443.3,
+      "height_m": 3.61,
+      "n_rays": 0,
+      "method": "median-fill"
+    }
+  ]
+}

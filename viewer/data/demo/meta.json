@@ -1,6 +1,6 @@
 {
- "scene": "antakya",
- "grid": 384,
+ "scene": "demo",
+ "grid": 512,
  "relative": false,
  "units": "m",
  "gsd_m": 0.6103515625,
@@ -11,7 +11,7 @@
  "acquisition_date": "2022-12-22T08:24:29Z",
  "max_height_m": 29.35,
  "stats": {
-  "scene": "antakya",
+  "scene": "demo",
   "method": "shadow-direct (Plan B)",
   "n_buildings": 167,
   "n_measured": 125,

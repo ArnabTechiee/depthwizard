@@ -8,5 +8,20 @@
   "scene": "fm",
   "max_height_m": 10.82,
   "buildings": 150
+ },
+ {
+  "scene": "atlas",
+  "max_height_m": 11.99,
+  "buildings": 50
+ },
+ {
+  "scene": "ian2",
+  "max_height_m": 3.61,
+  "buildings": 110
+ },
+ {
+  "scene": "ian_forest",
+  "max_height_m": 27.24,
+  "buildings": 304
  }
 ]
