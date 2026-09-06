@@ -10,6 +10,11 @@
   "buildings": 150
  },
  {
+  "scene": "pg",
+  "max_height_m": 18.17,
+  "buildings": 110
+ },
+ {
   "scene": "atlas",
   "max_height_m": 11.99,
   "buildings": 50
@@ -21,7 +26,7 @@
  },
  {
   "scene": "ian_forest",
-  "max_height_m": 27.24,
-  "buildings": 304
+  "max_height_m": 16.02,
+  "buildings": 128
  }
 ]

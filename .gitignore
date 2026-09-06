@@ -17,3 +17,27 @@ viewer/vendor/
 outputs/
 
 exports/
+checkpoints/
+models/
+data/raw/*.zip
+
+
+test_gamus/
+data/raw/*.h5
+data/raw/DC_03_26*
+data/work/*/gamus_*
+data/raw/antakya_*.tif
+data/raw/atlas_*.tif
+data/raw/ian*_*.tif
+data/raw/nepal_*
+data/work/antakya_*/
+data/work/atlas_*/
+data/work/ian*_*/
+data/work/nepal_*/
+data/work/DC_03_26/
+viewer/data/antakya_*/
+viewer/data/atlas_*/
+viewer/data/ian*_*/
+viewer/data/nepal_*/
+test_*.py
+visualize_gamus*.py

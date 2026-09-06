@@ -20,15 +20,17 @@ reloading it per upload would dominate the response time.
 
 from __future__ import annotations
 
+import io
 import shutil
 import threading
 import traceback
 import uuid
+import zipfile
 from datetime import datetime
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 ROOT = Path(__file__).parent
@@ -59,7 +61,7 @@ def get_model(size: str = "base"):
 # Pipeline job
 # --------------------------------------------------------------------------
 
-STAGES = ["ingest", "depth", "orient", "ground", "calibrate", "bake"]
+STAGES = ["ingest", "depth", "orient", "ground", "calibrate", "bake", "export"]
 
 
 def _set(job_id: str, **kw):
@@ -121,9 +123,35 @@ def run_pipeline(job_id: str, scene: str, image_path: Path,
         _set(job_id, stage="bake", progress=6 / len(STAGES))
         m_bake.run(scene, WORK, VIEWER / "data", 512)
 
+        # The PS's Elevation Estimation Module deliverable is a DSM "in a
+        # standard geospatial format" -- a .npy array does not satisfy that.
+        # Generate the GeoTIFF (and OBJ/CSV/heatmap) automatically here so
+        # every processed scene has a real download waiting, rather than
+        # requiring the user to know a second endpoint exists.
+        _set(job_id, stage="export", progress=7 / len(STAGES))
+        export_files = []
+        try:
+            from pipeline import export as m_export
+            m_export.run(scene, WORK, ROOT / "exports", stride=4)
+            export_dir = ROOT / "exports" / scene
+            if export_dir.exists():
+                export_files = sorted(p.name for p in export_dir.iterdir())
+        except Exception as exc:
+            # Export failing must never fail the whole job -- the viewer and
+            # the metric numbers are the primary deliverable and must still
+            # be reachable even if, say, a mesh export runs out of memory.
+            _set(job_id, export_error=f"{type(exc).__name__}: {exc}")
+
         _set(job_id, stage="done", progress=1.0, status="done",
              finished=datetime.utcnow().isoformat(timespec="seconds"),
-             viewer_url=f"/viewer/?scene={scene}")
+             viewer_url=f"/viewer/?scene={scene}",
+             export_url=f"/exports/{scene}/" if export_files else None,
+             export_files=export_files,
+             # Single-file `export_url` links can't deliver every export in
+             # one click (a browser <a> only ever downloads one file), and
+             # the bare export directory has no static index so it 404s.
+             # The frontend's primary download button points here instead.
+             zip_url=f"/api/scenes/{scene}/download" if export_files else None)
     except Exception as exc:
         _set(job_id, status="error", stage="failed",
              error=f"{type(exc).__name__}: {exc}",
@@ -145,11 +173,6 @@ async def upload(file: UploadFile = File(...),
                                  f"accepted: {', '.join(sorted(ALLOWED))}")
 
     scene = Path(file.filename).stem.replace(" ", "_")[:40] or "scene"
-    # Never clobber an existing scene: an upload that silently destroys a
-    # validated result is a failure mode you only notice afterwards.
-    if (WORK / scene).exists():
-        scene = f"{scene}_{uuid.uuid4().hex[:4]}"
-
     RAW.mkdir(parents=True, exist_ok=True)
     dest = RAW / f"{scene}{suffix}"
     with open(dest, "wb") as out:
@@ -201,7 +224,32 @@ async def export_scene(scene: str):
     m_export.run(scene, WORK, ROOT / "exports", stride=4)
     files = sorted(p.name for p in (ROOT / "exports" / scene).iterdir())
     return {"scene": scene, "files": files,
-            "download": f"/exports/{scene}/"}
+            "download": f"/exports/{scene}/",
+            "zip": f"/api/scenes/{scene}/download"}
+
+
+@app.get("/api/scenes/{scene}/download")
+async def download_scene_zip(scene: str):
+    """Bundle every export file for a scene into a single zip.
+
+    A bare directory link (`/exports/<scene>/`) 404s because StaticFiles has
+    no directory index, and a link to one file leaves the rest undiscovered.
+    This is the single URL the "Download DSM + exports" button in upload.html
+    points at, so one click gets everything.
+    """
+    export_dir = ROOT / "exports" / scene
+    if not export_dir.exists() or not any(export_dir.iterdir()):
+        raise HTTPException(404, f"no exports found for scene '{scene}'")
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for p in sorted(export_dir.iterdir()):
+            if p.is_file():
+                zf.write(p, arcname=p.name)
+    buf.seek(0)
+
+    headers = {"Content-Disposition": f'attachment; filename="{scene}_exports.zip"'}
+    return StreamingResponse(buf, media_type="application/zip", headers=headers)
 
 
 @app.get("/api/health")

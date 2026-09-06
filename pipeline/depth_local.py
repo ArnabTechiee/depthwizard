@@ -36,7 +36,13 @@ MODEL_IDS = {
 }
 
 
-def load_model(size: str, weights_dir: Path | None):
+def load_model(size: str, weights_dir: Path | None, checkpoint: str | None = None):
+    """
+    size: one of MODEL_IDS, ignored if checkpoint is given.
+    checkpoint: local directory OR HF repo id of a fine-tuned checkpoint
+                (e.g. one exported by model.save_pretrained(...) in the
+                GAMUS fine-tuning notebook). Overrides `size` entirely.
+    """
     try:
         import torch
         from transformers import AutoImageProcessor, AutoModelForDepthEstimation
@@ -51,7 +57,7 @@ def load_model(size: str, weights_dir: Path | None):
     if weights_dir:
         os.environ["HF_HOME"] = str(weights_dir.resolve())
 
-    model_id = MODEL_IDS[size]
+    model_id = checkpoint if checkpoint else MODEL_IDS[size]
     print(f"  loading {model_id} ...")
     t0 = time.time()
     processor = AutoImageProcessor.from_pretrained(model_id)
@@ -117,6 +123,10 @@ def main() -> int:
     ap.add_argument("scenes", nargs="*")
     ap.add_argument("--work", type=Path, default=Path("data/work"))
     ap.add_argument("--model", choices=list(MODEL_IDS), default="small")
+    ap.add_argument("--checkpoint", type=str, default=None,
+                    help="local dir or HF repo id of a fine-tuned checkpoint "
+                         "(e.g. a GAMUS-tuned model saved via "
+                         "model.save_pretrained(...)). Overrides --model.")
     ap.add_argument("--size", type=int, default=518,
                     help="model input resolution (518 native; 1036 sharper, 4x slower)")
     ap.add_argument("--weights-dir", type=Path, default=None,
@@ -125,7 +135,7 @@ def main() -> int:
                     help="fetch weights and exit (use at Docker build time)")
     args = ap.parse_args()
 
-    processor, model, torch = load_model(args.model, args.weights_dir)
+    processor, model, torch = load_model(args.model, args.weights_dir, args.checkpoint)
 
     if args.download:
         cache = args.weights_dir or Path(os.environ.get(

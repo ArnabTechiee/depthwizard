@@ -1,91 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
 <meta charset="utf-8">
-<title>DepthWizard — upload</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DepthWizard — building height reconstruction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --line:#2a3038; --text:#e6edf3;
-          --dim:#8b949e; --accent:#4dd0a7; --warn:#e3b341; --err:#f85149; }
-  * { box-sizing:border-box; margin:0; }
-  body { background:var(--bg); color:var(--text); min-height:100vh; padding:40px 24px;
-         font:14px/1.6 ui-monospace,"SF Mono",Menlo,Consolas,monospace; }
-  .wrap { max-width:860px; margin:0 auto; }
-  h1 { font-size:22px; font-weight:600; letter-spacing:-.01em; }
-  .sub { color:var(--dim); margin:6px 0 32px; }
-  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px;
-          padding:22px; margin-bottom:20px; }
-  h2 { font-size:11px; letter-spacing:.12em; text-transform:uppercase;
-       color:var(--accent); margin-bottom:14px; font-weight:600; }
-  #drop { border:1.5px dashed var(--line); border-radius:10px; padding:44px 20px;
-          text-align:center; cursor:pointer; transition:.15s; }
-  #drop:hover, #drop.over { border-color:var(--accent); background:rgba(77,208,167,.05); }
-  #drop b { color:var(--accent); }
-  .hint { color:var(--dim); font-size:12.5px; margin-top:8px; }
-  .opts { display:flex; gap:20px; flex-wrap:wrap; margin-top:18px; }
-  label { color:var(--dim); font-size:12.5px; display:block; margin-bottom:5px; }
-  select { background:var(--bg); color:var(--text); border:1px solid var(--line);
-           border-radius:6px; padding:7px 10px; font:inherit; font-size:13px; }
-  .bar { height:5px; background:var(--bg); border-radius:3px; overflow:hidden; margin:14px 0 10px; }
-  .fill { height:100%; background:var(--accent); width:0; transition:width .3s; }
-  .stages { display:flex; gap:6px; flex-wrap:wrap; }
-  .stg { font-size:11px; padding:3px 9px; border-radius:4px; background:var(--bg);
-         color:var(--dim); border:1px solid var(--line); }
-  .stg.on { color:var(--accent); border-color:var(--accent); }
-  .stg.ok { color:var(--text); }
-  .row { display:flex; justify-content:space-between; padding:3px 0; }
-  .row span:first-child { color:var(--dim); }
-  a.btn { display:inline-block; margin-top:14px; padding:9px 16px; border-radius:7px;
-          background:var(--accent); color:#06231b; text-decoration:none; font-weight:600; }
-  .scene { display:flex; justify-content:space-between; align-items:center;
-           padding:11px 0; border-bottom:1px solid var(--line); }
-  .scene:last-child { border-bottom:0; }
-  .scene a { color:var(--accent); text-decoration:none; }
-  .warn { color:var(--warn); } .err { color:var(--err); white-space:pre-wrap; font-size:12px; }
+  :root {
+    /* base */
+    --void:       #070a10;
+    --surface:    #0e131b;
+    --surface-2:  #121a24;
+    --line:       #1c2530;
+    --line-hi:    #2b3947;
+    --ink:        #edf2f7;
+    --muted:      #7d8ba0;
+    --muted-dim:  #4d586a;
+
+    /* pulled directly from the DSM heatmap ramp (pipeline/export.py) so the
+       UI accent colours are the same colours a judge will see on the actual
+       elevation renders, not an arbitrary brand palette */
+    --elev-1: #0d143c;   /* low ground   */
+    --elev-2: #146ea0;   /* mid-low      */
+    --elev-3: #2ea88f;   /* mid          */
+    --elev-4: #cf9a3a;   /* mid-high     */
+    --elev-5: #f2e7c9;   /* ridge / sunlit */
+
+    --danger: #d9564c;
+
+    --sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+    --radius: 7px;
+  }
+
+  * { box-sizing: border-box; }
+  html { color-scheme: dark; }
+
+  body {
+    margin: 0;
+    background: var(--void);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.55;
+    background-image:
+      linear-gradient(var(--surface) 1px, transparent 1px),
+      linear-gradient(90deg, var(--surface) 1px, transparent 1px);
+    background-size: 42px 42px;
+    background-position: center top;
+  }
+
+  a { color: inherit; }
+  ::selection { background: var(--elev-3); color: #04120e; }
+
+  :focus-visible {
+    outline: 2px solid var(--elev-3);
+    outline-offset: 2px;
+  }
+
+  .page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px 80px;
+  }
+
+  /* ---------------------------------------------------------- header --- */
+
+  header {
+    position: relative;
+    padding: 56px 0 34px;
+    overflow: hidden;
+  }
+
+  .contours {
+    position: absolute;
+    inset: -20px -40px auto -40px;
+    height: 220px;
+    opacity: .22;
+    pointer-events: none;
+  }
+
+  .masthead {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 18px;
+  }
+
+  .wordmark {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .wordmark .unit { font-family: var(--mono); font-weight: 500; font-size: 13px;
+    color: var(--elev-3); letter-spacing: .02em; }
+
+  .problem {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .status {
+    display: flex;
+    gap: 22px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  .status .item { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--elev-3);
+    box-shadow: 0 0 0 3px rgba(46,168,143,.18); flex: none; }
+  .dot.idle { background: var(--muted-dim); box-shadow: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .dot.live { animation: pulse 2.4s ease-in-out infinite; }
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(46,168,143,.18); }
+    50%      { box-shadow: 0 0 0 6px rgba(46,168,143,.06); }
+  }
+
+  header .rule {
+    margin-top: 30px;
+    height: 1px;
+    background: var(--line);
+  }
+
+  /* --------------------------------------------------------- modules --- */
+
+  .module { margin-top: 30px; }
+
+  .module-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .module-head .idx {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted-dim);
+  }
+  .module-head h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -.005em;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--edge, var(--line-hi));
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+  .panel.upload   { --edge: var(--elev-2); }
+  .panel.process  { --edge: var(--elev-3); }
+  .panel.archive  { --edge: var(--elev-4); }
+
+  /* ------------------------------------------------------------ drop --- */
+
+  #drop {
+    border: 1.5px dashed var(--line-hi);
+    border-radius: var(--radius);
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background-color .15s;
+  }
+  #drop:hover, #drop.over {
+    border-color: var(--elev-3);
+    background: rgba(46,168,143,.05);
+  }
+  #drop .lead { font-size: 15.5px; }
+  #drop .lead b { color: var(--elev-3); font-weight: 600; }
+  #drop .sub { color: var(--muted); font-size: 12.5px; margin-top: 6px; }
+
+  .modes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 18px;
+  }
+  .mode-card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  .mode-card b { display: block; color: var(--ink); font-size: 13px;
+    font-weight: 600; margin-bottom: 3px; }
+  .mode-card.a { border-left: 3px solid var(--elev-2); }
+  .mode-card.b { border-left: 3px solid var(--muted-dim); }
+
+  .controls {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+  }
+  .field label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  select {
+    appearance: none;
+    background: var(--surface-2) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6"><path d="M0 0l5 6 5-6z" fill="%237d8ba0"/></svg>') no-repeat right 11px center;
+    color: var(--ink);
+    border: 1px solid var(--line-hi);
+    border-radius: 6px;
+    padding: 8px 30px 8px 11px;
+    font: 13px var(--mono);
+  }
+  select:focus { border-color: var(--elev-3); }
+
+  /* -------------------------------------------------------- pipeline --- */
+
+  .rail {
+    display: flex;
+    align-items: center;
+    margin: 4px 0 26px;
+  }
+  .node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    position: relative;
+  }
+  .node .dotnum {
+    width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    border: 1.5px solid var(--line-hi); color: var(--muted-dim);
+    background: var(--surface); z-index: 1;
+    transition: border-color .25s, color .25s, background-color .25s;
+  }
+  .node .lbl {
+    font-family: var(--mono); font-size: 11px; color: var(--muted-dim);
+    transition: color .25s;
+  }
+  .node::before {
+    content: ""; position: absolute; top: 12px; left: -50%; width: 100%;
+    height: 1.5px; background: var(--line-hi); z-index: 0;
+  }
+  .node:first-child::before { display: none; }
+  .node.done .dotnum { border-color: var(--elev-3); background: var(--elev-3); color: #04120e; }
+  .node.done .lbl { color: var(--ink); }
+  .node.done::before { background: var(--elev-3); }
+  .node.now .dotnum { border-color: var(--elev-3); color: var(--elev-3); }
+  .node.now .lbl { color: var(--ink); }
+  .node.failed .dotnum { border-color: var(--danger); color: var(--danger); }
+  .node.failed .lbl { color: var(--danger); }
+
+  /* ------------------------------------------------------- telemetry --- */
+
+  .telemetry {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .stat {
+    background: var(--surface-2);
+    padding: 14px 16px;
+  }
+  .stat .v { font-family: var(--mono); font-size: 20px; font-weight: 500; }
+  .stat .k { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--mono); font-size: 12.5px;
+    padding: 3px 0;
+  }
+  .badge .dot { width: 6px; height: 6px; }
+
+  .note {
+    border-left: 2px solid var(--elev-4);
+    background: rgba(207,154,58,.08);
+    color: #e4c98a;
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+  .err {
+    border-left: 2px solid var(--danger);
+    background: rgba(217,86,76,.08);
+    color: #f0a49d;
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-family: var(--mono);
+    font-size: 12px;
+    white-space: pre-wrap;
+    margin-top: 12px;
+  }
+
+  .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+  .btn {
+    display: inline-block;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font: 600 13.5px var(--sans);
+    text-decoration: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+  .btn.primary { background: var(--elev-3); color: #04120e; }
+  .btn.primary:hover { background: #37bda1; }
+  .btn.ghost { background: transparent; border-color: var(--line-hi); color: var(--ink); }
+  .btn.ghost:hover { border-color: var(--elev-2); }
+
+  .filelist {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px;
+  }
+  .filelist a {
+    font-family: var(--mono); font-size: 11.5px; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 5px; padding: 4px 9px;
+    text-decoration: none;
+  }
+  .filelist a:hover { border-color: var(--elev-2); color: var(--ink); }
+
+  /* ------------------------------------------------------------- log --- */
+
+  .logrow {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 0; border-bottom: 1px solid var(--line); gap: 16px;
+  }
+  .logrow:last-child { border-bottom: 0; }
+  .logrow .name { font-weight: 600; text-decoration: none; }
+  .logrow .name:hover { color: var(--elev-3); }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .tag {
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 4px; padding: 2px 7px;
+  }
+  .logrow .export {
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+    text-decoration: none; flex: none;
+  }
+  .logrow .export:hover { color: var(--elev-3); }
+  .empty { color: var(--muted); font-size: 13.5px; }
+
+  @media (max-width: 560px) {
+    header { padding: 40px 0 26px; }
+    .wordmark { font-size: 24px; }
+    .status { gap: 14px; }
+    .modes { grid-template-columns: 1fr; }
+    .panel { padding: 18px; }
+  }
 </style>
+</head>
+<body>
+<div class="page">
 
-<div class="wrap">
-  <h1>DepthWizard</h1>
-  <div class="sub">Building heights from a single optical image, by shadow geometry.
-    SIH26175 · ISRO / Space Applications Centre</div>
-
-  <div class="card">
-    <h2>Upload imagery</h2>
-    <div id="drop">
-      <div><b>Drop a GeoTIFF, PNG or JPG</b> — or click to browse</div>
-      <div class="hint">GeoTIFF with CRS and sun metadata → absolute DSM in metres.<br>
-        PNG/JPG without spatial metadata → relative DSM, unitless.</div>
+  <header>
+    <svg class="contours" viewBox="0 0 900 220" preserveAspectRatio="none">
+      <path d="M-20 170 Q 120 120 260 155 T 560 140 T 920 175" fill="none" stroke="#2ea88f" stroke-width="1"/>
+      <path d="M-20 190 Q 140 150 280 178 T 580 165 T 920 195" fill="none" stroke="#2ea88f" stroke-width="1"/>
+      <path d="M-20 130 Q 100 70 240 105 T 540 90 T 920 120" fill="none" stroke="#146ea0" stroke-width="1"/>
+      <path d="M-20 90 Q 90 40 230 65 T 520 55 T 920 82" fill="none" stroke="#146ea0" stroke-width="1"/>
+    </svg>
+    <div class="masthead">
+      <div>
+        <div class="wordmark">DepthWizard <span class="unit">SIH26175</span></div>
+        <div class="problem">Building height reconstruction from single-view optical imagery · shadow geometry · ISRO / Space Applications Centre</div>
+      </div>
+      <div class="status" id="status">
+        <span class="item"><span class="dot idle" id="engineDot"></span><span id="engineText">checking engine…</span></span>
+        <span class="item"><span class="dot idle"></span><span id="sceneCount">— scenes archived</span></span>
+      </div>
     </div>
-    <input type="file" id="file" accept=".tif,.tiff,.png,.jpg,.jpeg" hidden>
-    <div class="opts">
-      <div><label>working resolution</label>
-        <select id="maxSize">
-          <option value="1024" selected>1024 px</option>
-          <option value="2048">2048 px — finer, slower</option>
-          <option value="768">768 px — faster</option>
-        </select></div>
-      <div><label>depth backbone</label>
-        <select id="model">
-          <option value="base" selected>Base — recommended</option>
-          <option value="small">Small — faster</option>
-          <option value="large">Large — slowest</option>
-        </select></div>
-      <div><label>min building footprint</label>
-        <select id="minArea">
-          <option value="120" selected>120 m²</option>
-          <option value="80">80 m²</option>
-          <option value="300">300 m²</option>
-        </select></div>
+    <div class="rule"></div>
+  </header>
+
+  <section class="module">
+    <div class="module-head"><span class="idx">01</span><h2>Upload imagery</h2></div>
+    <div class="panel upload">
+      <div id="drop">
+        <div class="lead"><b>Drop a GeoTIFF, PNG or JPG</b> — or click to browse</div>
+        <div class="sub">One image in. A geolocated, measured 3D scene out.</div>
+      </div>
+      <input type="file" id="file" accept=".tif,.tiff,.png,.jpg,.jpeg" hidden>
+
+      <div class="modes">
+        <div class="mode-card a"><b>GeoTIFF with CRS + sun metadata</b>
+          Absolute DSM — heights resolved in metres, building-by-building.</div>
+        <div class="mode-card b"><b>PNG / JPG, no spatial metadata</b>
+          Relative DSM — a proportioned but unitless height field.</div>
+      </div>
+
+      <div class="controls">
+        <div class="field"><label>working resolution</label>
+          <select id="maxSize">
+            <option value="1024" selected>1024 px</option>
+            <option value="2048">2048 px — finer, slower</option>
+            <option value="768">768 px — faster</option>
+          </select></div>
+        <div class="field"><label>depth backbone</label>
+          <select id="model">
+            <option value="base" selected>base — recommended</option>
+            <option value="small">small — faster</option>
+            <option value="large">large — slowest</option>
+          </select></div>
+        <div class="field"><label>min building footprint</label>
+          <select id="minArea">
+            <option value="120" selected>120 m²</option>
+            <option value="80">80 m²</option>
+            <option value="300">300 m²</option>
+          </select></div>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <div class="card" id="jobCard" hidden>
-    <h2>Processing</h2>
-    <div class="bar"><div class="fill" id="fill"></div></div>
-    <div class="stages" id="stages"></div>
-    <div id="jobInfo" style="margin-top:14px"></div>
-  </div>
+  <section class="module" id="jobCard" hidden>
+    <div class="module-head"><span class="idx">02</span><h2>Processing</h2></div>
+    <div class="panel process">
+      <div class="rail" id="stages"></div>
+      <div id="jobInfo"></div>
+    </div>
+  </section>
 
-  <div class="card">
-    <h2>Scenes</h2>
-    <div id="scenes" class="hint">loading…</div>
-  </div>
+  <section class="module">
+    <div class="module-head"><span class="idx">03</span><h2>Archive</h2></div>
+    <div class="panel archive">
+      <div id="scenes" class="empty">loading archive…</div>
+    </div>
+  </section>
+
 </div>
 
 <script>
@@ -102,10 +465,13 @@ $("drop").ondrop = e => {
 $("file").onchange = e => e.target.files[0] && send(e.target.files[0]);
 
 function drawStages(current, failed) {
-  $("stages").innerHTML = STAGES.map(s => {
-    const i = STAGES.indexOf(s), c = STAGES.indexOf(current);
-    const cls = failed ? "" : (i < c ? "stg ok" : i === c ? "stg on" : "stg");
-    return `<span class="${cls || 'stg'}">${s}</span>`;
+  const c = STAGES.indexOf(current);
+  $("stages").innerHTML = STAGES.map((s, i) => {
+    const cls = failed && i === c ? "failed" : i < c ? "done" : i === c ? "now" : "";
+    return `<div class="node ${cls}">
+              <div class="dotnum">${i + 1}</div>
+              <div class="lbl">${s}</div>
+            </div>`;
   }).join("");
 }
 
@@ -117,7 +483,8 @@ async function send(file) {
   fd.append("min_area", $("minArea").value);
 
   $("jobCard").hidden = false;
-  $("jobInfo").innerHTML = `<span class="hint">uploading ${file.name}…</span>`;
+  $("jobCard").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  $("jobInfo").innerHTML = `<div class="empty">uploading ${file.name}…</div>`;
   drawStages("ingest");
 
   let res;
@@ -129,56 +496,108 @@ async function send(file) {
   poll(res.job_id);
 }
 
+function tile(k, v) {
+  return `<div class="stat"><div class="v">${v}</div><div class="k">${k}</div></div>`;
+}
+
 async function poll(id) {
   const j = await (await fetch(`/api/jobs/${id}`)).json();
-  $("fill").style.width = `${(j.progress || 0) * 100}%`;
   drawStages(j.stage, j.status === "error");
 
-  const rows = [];
-  if (j.mode) rows.push(["mode", j.mode.toUpperCase()]);
-  if (j.gsd_m) rows.push(["GSD", `${j.gsd_m.toFixed(3)} m/px`]);
-  if (j.buildings != null) rows.push(["buildings", j.buildings]);
-  if (j.measured != null) rows.push(["measured from shadow", j.measured]);
-  if (j.median_height_m != null) rows.push(["median height", `${j.median_height_m} m`]);
-  if (j.repeatability_mae_m != null) rows.push(["repeatability MAE", `${j.repeatability_mae_m} m`]);
+  const tiles = [];
+  if (j.mode) {
+    const abs = j.mode === "absolute";
+    tiles.push(`<div class="stat"><div class="badge">
+      <span class="dot" style="background:${abs ? "var(--elev-3)" : "var(--muted-dim)"}"></span>
+      ${abs ? "Absolute" : "Relative"}</div>
+      <div class="k">${abs ? "metric DSM" : "unitless DSM"}</div></div>`);
+  }
+  if (j.gsd_m) tiles.push(tile("ground sample distance", `${j.gsd_m.toFixed(3)} m/px`));
+  if (j.buildings != null) tiles.push(tile("buildings detected", j.buildings));
+  if (j.measured != null) tiles.push(tile("measured from shadow", j.measured));
+  if (j.median_height_m != null) tiles.push(tile("median height", `${j.median_height_m} m`));
+  if (j.repeatability_mae_m != null) tiles.push(tile("repeatability MAE", `${j.repeatability_mae_m} m`));
 
-  let html = rows.map(([k, v]) =>
-    `<div class="row"><span>${k}</span><span>${v}</span></div>`).join("");
+  let html = tiles.length ? `<div class="telemetry">${tiles.join("")}</div>` : "";
 
   if (j.blockers && j.blockers.length)
-    html += `<div class="warn" style="margin-top:10px">relative mode — ${j.blockers.join("; ")}</div>`;
-  if (j.note) html += `<div class="warn" style="margin-top:10px">${j.note}</div>`;
+    html += `<div class="note">Running in relative mode — ${j.blockers.join("; ")}</div>`;
+  if (j.note) html += `<div class="note">${j.note}</div>`;
 
   if (j.status === "error") {
-    html += `<div class="err" style="margin-top:12px">${j.error}</div>`;
+    html += `<div class="err">${j.error}</div>`;
     $("jobInfo").innerHTML = html;
     return;
   }
+
   if (j.status === "done") {
-    html += `<a class="btn" href="${j.viewer_url}">Open 3D scene →</a>`;
+    html += `<div class="actions">
+               <a class="btn primary" href="${j.viewer_url}">Open 3D scene</a>`;
+
+    if (j.zip_url && j.export_files && j.export_files.length) {
+      html += `<a class="btn ghost" href="${j.zip_url}">Download exports (.zip)</a>`;
+    }
+    html += `</div>`;
+
+    if (j.export_files && j.export_files.length) {
+      html += `<div class="filelist">${j.export_files
+        .map(f => `<a href="${j.export_url}${f}">${f}</a>`).join("")}</div>`;
+    } else if (j.export_error) {
+      html += `<div class="note" style="border-color:var(--danger);color:#f0a49d;background:rgba(217,86,76,.08)">
+                 GeoTIFF/mesh export failed: ${j.export_error}
+               </div>`;
+    }
+
     $("jobInfo").innerHTML = html;
     loadScenes();
+    loadHealth();
     return;
   }
-  $("jobInfo").innerHTML = html;
+
+  $("jobInfo").innerHTML = html || `<div class="empty">working…</div>`;
   setTimeout(() => poll(id), 900);
 }
 
 async function loadScenes() {
   try {
     const list = await (await fetch("/api/scenes")).json();
-    if (!list.length) { $("scenes").textContent = "no scenes yet"; return; }
+    $("sceneCount").textContent = `${list.length} scene${list.length === 1 ? "" : "s"} archived`;
+    if (!list.length) {
+      $("scenes").innerHTML = `<div class="empty">No scenes archived yet — process an image above to begin.</div>`;
+      return;
+    }
     $("scenes").innerHTML = list.map(s => {
       const st = s.stats || {};
-      const bits = [];
-      if (st.n_buildings) bits.push(`${st.n_buildings} buildings`);
-      if (s.max_height_m) bits.push(`max ${s.max_height_m} m`);
-      if (st.lidar_rmse_m) bits.push(`RMSE ${st.lidar_rmse_m} m vs LiDAR`);
-      return `<div class="scene"><div><a href="/viewer/?scene=${s.scene}">${s.scene}</a>
-              <div class="hint">${bits.join(" · ")}</div></div>
-              <a href="/api/scenes/${s.scene}/exports">export</a></div>`;
+      const tags = [];
+      if (st.n_buildings) tags.push(`${st.n_buildings} buildings`);
+      if (s.max_height_m) tags.push(`max ${s.max_height_m} m`);
+      if (st.lidar_rmse_m) tags.push(`RMSE ${st.lidar_rmse_m} m vs LiDAR`);
+      return `<div class="logrow">
+                <div>
+                  <a class="name" href="/viewer/?scene=${s.scene}">${s.scene}</a>
+                  <div class="tags">${tags.map(t => `<span class="tag">${t}</span>`).join("")}</div>
+                </div>
+                <a class="export" href="/api/scenes/${s.scene}/exports">exports</a>
+              </div>`;
     }).join("");
-  } catch { $("scenes").textContent = "could not reach the API"; }
+  } catch {
+    $("scenes").innerHTML = `<div class="empty">Could not reach the API.</div>`;
+  }
 }
+
+async function loadHealth() {
+  try {
+    const h = await (await fetch("/api/health")).json();
+    $("engineDot").classList.toggle("live", !!h.model_loaded);
+    $("engineDot").classList.toggle("idle", !h.model_loaded);
+    $("engineText").textContent = h.model_loaded ? "engine ready" : "engine cold — first run loads the model";
+  } catch {
+    $("engineText").textContent = "engine unreachable";
+  }
+}
+
 loadScenes();
+loadHealth();
 </script>
+</body>
+</html>

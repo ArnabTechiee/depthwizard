@@ -50,6 +50,9 @@ Every building's shadow gives us its real height directly, using physics — no 
 - Testing across 5 terrain types (urban/suburban/hilly/forest/sparse) with honest reporting of where it fails
 - Real vertical building walls (not a smeared height-blob) so first-person walking looks correct
 - A working upload website + API, not just command-line scripts
+- A fine-tuned model on the PS's own recommended dataset (GAMUS), tested and rejected when it failed to transfer
+- A second, independently LiDAR-validated scene (Punta Gorda) to check the accuracy claim isn't a one-scene fluke
+- Fully containerized, network-disabled offline deployment, verified end-to-end
 
 ---
 
@@ -115,13 +118,13 @@ depthwizard/
 | 7 | Accuracy vs reference data | ✅ Done (real USGS LiDAR, RMSE 3.66m) |
 | 8 | Stability across 4 terrain types | ✅ Done (5 scenes tested, honestly reported) |
 | 9 | Standard geospatial export | ✅ Done (GeoTIFF, OBJ, CSV) |
-| 10 | **Standalone offline deployment (Docker)** | ⬜ **Not started — next priority** |
+| 10 | **Standalone offline deployment (Docker)** | ✅ Done — tested, working |
 | 11 | Edge-aware depth refinement | ⬜ Not started |
 | 12 | Vegetation/terrain false-positive filtering | ⬜ Not started (documented limitation) |
-| 13 | Second LiDAR-validated scene | ⬜ Not started (only 1 of 5 scenes has ground truth) |
+| 13 | **Second LiDAR-validated scene** | ✅ Done (Punta Gorda, RMSE 7.90m) |
 | 14 | Semantic building segmentation | ⬜ Not started (would fix rooftop over-splitting) |
 
-**Bottom line: all required Round-1 deliverables are built and working. Remaining work is hardening for the December finale.**
+**Bottom line: all required Round-1 deliverables are built and working, plus two of the four post-Round-1 priorities (Docker deployment, second LiDAR scene) are now done. Remaining work is the segmentation-based fixes for terrain/vegetation false positives and rooftop over-splitting.**
 
 ---
 
@@ -131,6 +134,7 @@ depthwizard/
 |---|---|---|---|---|
 | Antakya, Türkiye | Dense urban | 167 | 125 (75%) | — (no local LiDAR) |
 | Fort Myers, USA | Suburban | 150 | 106 (71%) | **RMSE 3.66m** ✅ |
+| Punta Gorda, USA | Post-hurricane | 110 | 73 (66%) | **RMSE 7.90m** ✅ |
 | Atlas Mountains | Hilly | 50 | 18 (36%) | — |
 | Ian Forest | Forested | 304* | 48 (16%) | — |
 | Ian2 | Sparse/barren | 110* | 1 (1%) | — |
@@ -165,19 +169,20 @@ Full command-by-command pipeline instructions (re-running from scratch, LiDAR va
 ## 8. Honest limitations (say these before a judge asks)
 
 - **Depth model was tested and rejected** as the height source (R² = −0.74) — shadows do the real measurement now
-- **Only Fort Myers has real LiDAR ground truth** — other scenes report internal consistency ("repeatability"), not verified accuracy
+- **A fine-tuned model on the PS's recommended dataset (GAMUS) was also tested and rejected** — it improved on its own held-out set (R²=0.77) but degraded every metric on Fort Myers (RMSE 3.66m→6.30m), so it did not ship
+- **Two of six scenes have real LiDAR ground truth** (Fort Myers, Punta Gorda) — other scenes report internal consistency ("repeatability"), not verified accuracy
 - **Forest and barren terrain produce false-positive "buildings"** — tree crowns and rocks cast shadows too; the system has no semantic understanding of *what* cast a shadow yet
-- **Short/tiny buildings are harder to measure** — a 3m building's shadow is only ~10 pixels; resolution matters
+- **Short/tiny buildings are harder to measure** — a 3m building's shadow is only ~10 pixels; resolution matters, and it's the main reason Punta Gorda's RMSE (7.90m) is higher than Fort Myers' (3.66m) — its buildings are shorter on average
 - **Dense rooftops sometimes over-split** into narrow strips (visible in walk mode from above) — needs real segmentation, not just a height threshold
 
 ---
 
 ## 9. What's next (priority order, post-Round-1)
 
-1. **Docker packaging** — full offline deployment, verified with networking disabled (named PS requirement)
+1. ~~**Docker packaging**~~ — ✅ done, verified with networking disabled
 2. **Vegetation false-positive filter** — cheap fix, reuses existing greenness-detection code
 3. **Edge-aware depth refinement** — sharper building outlines, fixes the "fin" over-splitting
-4. **Second LiDAR-validated scene** — strengthen the accuracy claim beyond one scene
+4. ~~**Second LiDAR-validated scene**~~ — ✅ done (Punta Gorda, RMSE 7.90m)
 5. **Semantic building segmentation** — the real, harder fix for rooftop over-splitting and terrain/vegetation false positives
 
 ---

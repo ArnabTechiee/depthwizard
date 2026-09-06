@@ -1,0 +1,33 @@
+{
+  "scene": "pg",
+  "metric": "ridge",
+  "lidar_source": "USGS_LPC_FL_Peninsular_FDEM_2018_D19_DRRA_LID2019_493130_W.laz, USGS_LPC_FL_Peninsular_FDEM_2018_D19_DRRA_LID2019_493131_W.laz, USGS_LPC_FL_Peninsular_FDEM_2018_D19_DRRA_LID2019_493132_W.laz, USGS_LPC_FL_Peninsular_FDEM_2018_D19_DRRA_LID2019_493430_W.laz, USGS_LPC_FL_Peninsular_FDEM_2018_D19_DRRA_LID2019_493431_W.laz, USGS_LPC_FL_Peninsular_FDEM_2018_D19_DRRA_LID2019_493432_W.laz",
+  "dsm_coverage": 0.8279,
+  "all_pixels": {
+    "n": 4194304,
+    "rmse_m": 9.89,
+    "mae_m": 3.686,
+    "bias_m": -2.916,
+    "ref_mean_m": 3.455,
+    "pred_mean_m": 0.539,
+    "correlation": 0.0329,
+    "r2": -0.1199
+  },
+  "building_pixels": {
+    "n": 1009481,
+    "rmse_m": 20.147,
+    "mae_m": 14.704,
+    "bias_m": -11.971,
+    "ref_mean_m": 13.957,
+    "pred_mean_m": 1.986,
+    "correlation": -0.3898,
+    "r2": -0.8664
+  },
+  "per_building": {
+    "n_buildings": 110,
+    "rmse_m": 7.898,
+    "mae_m": 5.521,
+    "bias_m": -0.89,
+    "correlation": 0.3173
+  }
+}

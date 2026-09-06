@@ -1,0 +1,21 @@
+{
+  "datetime": "2021-09-27T16:09:49Z",
+  "platform": "GE01",
+  "gsd": 0.42,
+  "ard_metadata_version": "0.0.1",
+  "catalog_id": "105001002757D500",
+  "utm_zone": 17,
+  "quadkey": "031331330012",
+  "view:off_nadir": 6.0,
+  "view:azimuth": 114.2,
+  "view:incidence_angle": 83.3,
+  "view:sun_azimuth": 147.6,
+  "view:sun_elevation": 57.2,
+  "proj:epsg": 32617,
+  "grid:code": "MXRA-Z17-031331330012",
+  "proj:bbox": "429843.75,2949843.75,435156.25,2955156.25",
+  "tile:data_area": 28.2,
+  "tile:clouds_area": 0.0,
+  "tile:clouds_percent": 0,
+  "visual": "https://maxar-opendata.s3.amazonaws.com/events/Hurricane-Ian-9-26-2022/ard/17/031331330012/2021-09-27/105001002757D500-visual.tif"
+}

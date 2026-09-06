@@ -1,0 +1,12 @@
+{
+  "scene": "antakya",
+  "model": "GAMUS 1000-scene SSI",
+  "scale": 1.5554613,
+  "shift": 0.22597118,
+  "input": "data\\work\\antakya\\depth.npy",
+  "output": "data\\work\\antakya\\gamus_metric.npy",
+  "input_min": 0.0,
+  "input_max": 8.91783332824707,
+  "metric_min": 0.22597117722034454,
+  "metric_max": 14.097315788269043
+}

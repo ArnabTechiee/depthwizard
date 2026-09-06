@@ -141,6 +141,16 @@ def run(scene: str, work_root: Path, min_area_m2: float,
     min_area_px = int(min_area_m2 / (gsd ** 2))
     shadows = shadow_mask(rgb)
     buildings = building_mask(ndsm_rel, min_area_px)
+
+    # Reject vegetation before it can be measured as a building. A tree
+    # crown looks identical to a small rooftop to the height+shadow logic
+    # alone; greenness is the cheapest signal that separates them.
+    r, g, b = rgb[..., 0].astype(int), rgb[..., 1].astype(int), rgb[..., 2].astype(int)
+    greenness = g - (r + b) / 2
+    is_vegetation = greenness > 6
+    print(f"  vegetation flagged: {is_vegetation.mean()*100:.1f}% of scene")
+    buildings = buildings & ~is_vegetation
+
     labels = split_blocks(buildings, ndsm_rel, min_area_px)
     n = int(labels.max())
 

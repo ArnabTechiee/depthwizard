@@ -1,0 +1,18 @@
+{
+  "scene_id": "pg",
+  "source_path": "data\\raw\\pg.tif",
+  "mode": "absolute",
+  "width": 2048,
+  "height": 2048,
+  "crs": "EPSG:32617",
+  "gsd_m": 0.30517578125,
+  "gsd_x_m": 0.30517578125,
+  "gsd_y_m": 0.30517578125,
+  "sun_elevation_deg": 42.2,
+  "sun_azimuth_deg": 152.3,
+  "center_lat": 26.941823238060028,
+  "center_lon": -82.01047856465175,
+  "acquisition_date": "2022-02-03T16:17:27Z",
+  "downsample_factor": 1.0,
+  "metadata_source": "geotiff-tags"
+}

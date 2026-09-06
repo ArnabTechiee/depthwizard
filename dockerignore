@@ -1,0 +1,17 @@
+.venv/
+.venv
+data/raw/
+data/lidar/
+data/work/
+outputs/
+exports/
+__pycache__/
+*.pyc
+.git/
+notebooks/
+checkpoints/
+*.laz
+*__rgb.npy
+*__depth.npy
+depth_outputs.zip
+depthout/

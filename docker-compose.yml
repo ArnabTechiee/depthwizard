@@ -1,0 +1,26 @@
+services:
+  depthwizard:
+    build: .
+    image: depthwizard:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      # Process new scenes and keep exports without rebuilding the image.
+      - ./data/work:/app/data/work
+      - ./exports:/app/exports
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    # Proves the airgap claim: with this uncommented the container has no
+    # network at all, and the app -- upload, inference, viewer, export --
+    # must still work end to end using only what was baked into the image.
+    # To verify before finals:
+    #   docker compose up --build
+    #   (confirm it works normally)
+    #   uncomment the line below, then: docker compose up --force-recreate
+    #   (confirm upload + inference + viewer STILL work with zero network)
+    # network_mode: none

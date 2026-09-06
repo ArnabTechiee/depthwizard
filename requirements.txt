@@ -29,3 +29,9 @@ laspy[lazrs]>=2.5
 
 # Data acquisition (Maxar STAC catalogs, vendoring Three.js)
 requests>=2.31
+
+# Application server - the interactive upload platform the PS requires,
+# not just a static viewer
+fastapi>=0.110
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9   # required by FastAPI to parse file uploads

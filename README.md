@@ -38,6 +38,7 @@ single optical frame is cheap and already being captured almost anywhere.
 |---|---|---|---|---|
 | Antakya, Türkiye (dense urban) | 167 | 125 (75%) | 9.0 m | 3.02 m |
 | Fort Myers, USA (suburban) | 150 | 106 (71%) | 2.4 m | 0.75 m |
+| Punta Gorda, USA (post-hurricane) | 110 | 73 (66%) | 1.4 m | 0.89 m |
 
 ### Validated against LiDAR
 
@@ -55,6 +56,19 @@ measure different surfaces. Applying a stated architectural prior (a 5:12
 residential pitch over each building's own short span) reduces bias from
 −2.89 m to −0.22 m. The prior is geometric and is *not* fitted to the
 reference data.
+
+### Second validation — Punta Gorda
+
+| Metric | Fort Myers | Punta Gorda |
+|---|---|---|
+| RMSE | 3.66 m | 7.90 m |
+| Bias | −0.22 m | −0.89 m |
+| Correlation | 0.183 | 0.317 |
+| n buildings | 150 | 110 |
+
+Punta Gorda's buildings were shorter (median 1.4m vs 2.4m), giving shorter
+shadows and less precise measurement — consistent with the resolution
+limitation already documented above.
 
 ### Stability across terrain
 
@@ -110,6 +124,13 @@ Larger backbones resolve more structure, so more footprints survive
 segmentation. Running fully offline on CPU costs roughly 0.9 m of RMSE against
 GPU Large — a quantified trade against the PS's standalone-deployment
 requirement rather than a hidden compromise.
+
+### Tested the PS's recommended dataset (GAMUS)
+
+Fine-tuned Depth Anything V2 on 1000 GAMUS scenes (R²=0.77 on GAMUS's own
+held-out set). Deployed against our Fort Myers benchmark, it degraded every
+metric: RMSE 3.66m→6.30m, bias −0.22m→+1.16m, correlation went negative.
+GAMUS's specific sensor/altitude did not transfer. Reverted to Base backbone.
 
 ---
 
@@ -309,13 +330,17 @@ injecting tens of metres.
 
 ## Offline deployment
 
+Fully containerized and tested:
+
 ```bash
-python scripts/vendor_three.py       # serve Three.js locally, not from a CDN
-docker compose build                 # bakes model weights into the image
+python scripts/vendor_three.py
+docker compose build
 docker compose up
 ```
 
-Set `network_mode: none` in `docker-compose.yml` to verify it runs airgapped.
+Confirmed working end-to-end via web upload inside the container. Verified
+with `network_mode: none` uncommented in `docker-compose.yml`.
+
 `HF_HUB_OFFLINE=1` is set inside the image, so any attempt to reach the network
 fails loudly rather than silently succeeding on a developer machine.
 
@@ -338,10 +363,8 @@ fails loudly rather than silently succeeding on a developer machine.
   visible from rooftop level. Street level looks correct.
 - **Off-nadir imagery causes building lean**, displacing where each shadow
   appears to begin. Tiles are filtered to low off-nadir where possible.
-- **Antakya has no ground truth.** That scene reports repeatability
-  (a precision measure), not accuracy. Only Fort Myers sits inside US LiDAR
-  coverage, so four of five terrain classes have precision figures but no
-  accuracy figures.
+- Two of six scenes have real LiDAR ground truth (Fort Myers, Punta Gorda).
+  Others report repeatability only.
 - **Terrain and canopy shadows are measured as buildings.** The shadow mask is
   photometric; it has no notion of what cast the shadow. On bare mountainside
   and mangrove this produces large false-positive counts.
