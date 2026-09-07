@@ -4,6 +4,7 @@
   :root {
     --bg: #0d1117; --panel: #161b22; --line: #2a3038;
     --text: #e6edf3; --dim: #8b949e; --accent: #4dd0a7; --water: #3b82f6;
+    --sun: #f5c451;
   }
   * { box-sizing: border-box; margin: 0; }
   body { background: var(--bg); color: var(--text); overflow: hidden;
@@ -12,7 +13,10 @@
   .panel {
     position: fixed; background: rgba(22,27,34,.93); border: 1px solid var(--line);
     border-radius: 8px; padding: 14px 16px; backdrop-filter: blur(8px);
+    opacity: 0; transform: translateY(6px);
+    transition: opacity .5s ease, transform .5s ease;
   }
+  .panel.show { opacity: 1; transform: translateY(0); }
   #meta  { top: 16px; left: 16px; width: 268px;
            max-height: calc(100vh - 32px); overflow-y: auto; }
   #probe { top: 16px; right: 16px; width: 240px; }
@@ -29,6 +33,12 @@
   #load { position: fixed; inset: 0; display: grid; place-items: center;
           background: var(--bg); z-index: 9; }
   #load[hidden] { display: none; }
+  #loadBox { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  #ring { width: 46px; height: 46px; border-radius: 50%;
+          border: 2px solid var(--line); border-top-color: var(--accent);
+          animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loadMsg { color: var(--dim); font-size: 12px; letter-spacing: .04em; }
 
   #mode { position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
           display: flex; gap: 0; border: 1px solid var(--line);
@@ -54,9 +64,52 @@
   #fpHint b { color: var(--text); }
   #err { color: #f85149; max-width: 560px; text-align: center; line-height: 1.7;
          white-space: pre-wrap; padding: 0 16px; }
+
+  /* ---- added: hero reveal ------------------------------------------- */
+  #hero { position: fixed; top: 90px; left: 50%; transform: translate(-50%, -8px);
+          text-align: center; pointer-events: none; opacity: 0;
+          transition: opacity .8s ease, transform .8s ease; z-index: 5; }
+  #hero.show { opacity: 1; transform: translate(-50%, 0); }
+  #hero.hide { opacity: 0; transform: translate(-50%, -8px); }
+  #heroNum { font-size: 56px; font-weight: 600; color: var(--accent);
+             text-shadow: 0 0 28px rgba(77,208,167,.45); line-height: 1; }
+  #heroSub { margin-top: 8px; color: var(--dim); font-size: 13px; letter-spacing: .02em; }
+
+  /* ---- added: compass, docked as a real panel top-right (under the probe)
+     instead of floating loose over the 3D scene, so it keeps contrast no
+     matter what's rendered behind it. ---- */
+  #compass { top: 150px; right: 16px; width: 240px;
+             display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  #compassPointer { width: 0; height: 0; border-left: 6px solid transparent;
+                    border-right: 6px solid transparent; border-bottom: 9px solid var(--accent);
+                    margin-bottom: -3px; filter: drop-shadow(0 0 3px rgba(77,208,167,.6)); }
+  #heading { color: var(--dim); font-size: 12px; letter-spacing: .06em; }
+  #heading b { color: var(--accent); font-size: 13px; }
+  #sunLegend { display: flex; align-items: center; gap: 6px; color: var(--dim);
+               font-size: 11px; text-align: center; line-height: 1.4; }
+  #sunLegend .dot { min-width: 7px; width: 7px; height: 7px; border-radius: 50%;
+                     background: var(--sun); box-shadow: 0 0 7px var(--sun); }
+
+  /* ---- added: side actions ------------------------------------------- */
+  #actions { position: fixed; bottom: 16px; right: 16px; display: flex;
+             flex-direction: column; gap: 8px; z-index: 4; }
+  .iconBtn { width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--line);
+             background: rgba(22,27,34,.93); backdrop-filter: blur(8px); color: var(--dim);
+             cursor: pointer; display: grid; place-items: center; transition: color .15s, border-color .15s; }
+  .iconBtn:hover { color: var(--text); border-color: var(--accent); }
+  .iconBtn.on { color: #06231b; background: var(--accent); border-color: var(--accent); }
+  .iconBtn svg { width: 17px; height: 17px; }
+  #flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none;
+           z-index: 20; transition: opacity .08s ease; }
+  #toast { position: fixed; bottom: 66px; right: 16px; background: rgba(22,27,34,.95);
+           border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px;
+           color: var(--dim); font-size: 12px; opacity: 0; transform: translateY(6px);
+           transition: opacity .3s, transform .3s; pointer-events: none; }
+  #toast.show { opacity: 1; transform: translateY(0); }
 </style>
 
 <div id="stage"></div>
+<div id="flash"></div>
 <div id="cross"></div>
 <div id="mode" hidden>
   <button id="btnOrbit" class="on">Orbit</button>
@@ -64,7 +117,19 @@
 </div>
 <div id="fpHint"><b>W A S D</b> move · <b>Shift</b> sprint ·
   <b>Space / C</b> up / down · <b>mouse</b> look · <b>Esc</b> exit</div>
-<div id="load"><div id="err">loading…</div></div>
+
+<div id="hero">
+  <div id="heroNum">0</div>
+  <div id="heroSub">&nbsp;</div>
+</div>
+
+<div id="load">
+  <div id="loadBox">
+    <div id="ring"></div>
+    <div id="loadMsg">initializing…</div>
+  </div>
+  <div id="err" style="display:none"></div>
+</div>
 
 <div class="panel" id="meta" hidden>
   <h2>Scene</h2>
@@ -98,11 +163,50 @@
   <div class="row"><span>mesh</span><span id="meshInfo">—</span></div>
 </div>
 
+<!-- ---- added: live compass, tied to the same sun geometry that drives the
+     shadow-height measurement -- it's a readout of real scene data, not a
+     decorative widget. ---- -->
+<div class="panel" id="compass" hidden>
+  <div id="compassPointer"></div>
+  <svg viewBox="0 0 120 120" width="84" height="84">
+    <circle cx="60" cy="60" r="56" fill="rgba(255,255,255,.05)" stroke="#40484f" stroke-width="1.5"/>
+    <g id="compassRing">
+      <g id="ticks"></g>
+      <text x="60" y="21" text-anchor="middle" font-size="13" fill="#4dd0a7" font-weight="700">N</text>
+      <text x="106" y="64" text-anchor="middle" font-size="10" fill="#e6edf3" font-weight="600">E</text>
+      <text x="60" y="105" text-anchor="middle" font-size="10" fill="#e6edf3" font-weight="600">S</text>
+      <text x="14" y="64" text-anchor="middle" font-size="10" fill="#e6edf3" font-weight="600">W</text>
+      <circle id="sunDot" cx="60" cy="12" r="5" fill="#f5c451" stroke="#0d1117" stroke-width="1"
+              style="filter:drop-shadow(0 0 5px #f5c451)"/>
+    </g>
+  </svg>
+  <div id="heading">hdg <b id="headingVal">000°</b></div>
+  <div id="sunLegend"><span class="dot"></span>sun bearing (used for h = L·GSD / tan θ)</div>
+</div>
+
+<!-- ---- added: screenshot + showcase auto-rotate ---- -->
+<div id="actions">
+  <button class="iconBtn" id="btnShot" title="Save screenshot">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+      <path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13.5" r="3.4"/>
+    </svg>
+  </button>
+  <button class="iconBtn" id="btnSpin" title="Toggle showcase spin">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+      <path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/>
+    </svg>
+  </button>
+  <button class="iconBtn" id="btnQuality" title="Toggle bloom/vignette (heavier on integrated GPUs)"
+          style="width:auto; padding:0 8px; font-size:10px; letter-spacing:.04em;">FX·LOW</button>
+</div>
+<div id="toast"></div>
+
 <script>
   window.addEventListener("error", function (ev) {
     var l = document.getElementById("load"), e = document.getElementById("err");
     if (!l || !e || e.dataset.specific === "1") return;
-    l.hidden = false;
+    l.hidden = false; e.style.display = "block";
+    document.getElementById("loadBox").style.display = "none";
     var m = ev.message || (ev.target && (ev.target.src || ev.target.href)) || "unknown";
     e.innerHTML = "Failed to load: <b>" + m + "</b><br><br>Open DevTools (F12) → " +
       "Network and check requests to <b>unpkg.com</b>.";
@@ -110,7 +214,8 @@
   window.addEventListener("unhandledrejection", function (ev) {
     var l = document.getElementById("load"), e = document.getElementById("err");
     if (!l || !e) return;
-    l.hidden = false;
+    l.hidden = false; e.style.display = "block";
+    document.getElementById("loadBox").style.display = "none";
     e.innerHTML = "Unhandled error: <b>" + ((ev.reason && ev.reason.message) || ev.reason) + "</b>";
   });
 </script>
@@ -126,6 +231,11 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { PointerLockControls } from "three/addons/controls/PointerLockControls.js";
+// ---- added: cinematic post-processing pipeline ----
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 
 const SCENE = new URLSearchParams(location.search).get("scene") || "antakya";
 const WALL_THRESHOLD_M = 1.0;   // height jump that counts as a building edge
@@ -133,9 +243,14 @@ const $ = id => document.getElementById(id);
 
 function fail(msg) {
   $("load").hidden = false;
+  $("err").style.display = "block";
+  $("loadBox").style.display = "none";
   $("err").dataset.specific = "1";
   $("err").innerHTML = msg;
 }
+
+// ---- added: staged loading text, purely cosmetic ----
+function setStage(msg) { const el = $("loadMsg"); if (el) el.textContent = msg; }
 
 function rows(target, pairs) {
   target.innerHTML = pairs
@@ -146,6 +261,18 @@ function rows(target, pairs) {
 
 const fmt = (v, d = 1, s = "") =>
   (typeof v === "number" && !Number.isNaN(v)) ? `${v.toFixed(d)}${s}` : null;
+
+// ---- added: small helper, counts a number up to its final value ----
+function countUp(el, end, decimals = 0, suffix = "", ms = 1100) {
+  const t0 = performance.now();
+  const step = now => {
+    const p = Math.min(1, (now - t0) / ms);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = (end * eased).toFixed(decimals) + suffix;
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
 
 /**
  * Build the city as real geometry instead of a smooth height-field.
@@ -225,12 +352,63 @@ function buildCity(heights, N, SPAN, threshold) {
            walls: wallPos.length / 18 };
 }
 
+// ---- added: gradient sky dome. Cheap, and it turns the flat void behind
+// the city into an atmosphere without touching how the city itself is lit
+// or measured. ----
+function buildSky(radius) {
+  const geo = new THREE.SphereGeometry(radius, 24, 16);
+  const mat = new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    depthWrite: false,
+    uniforms: {
+      top:    { value: new THREE.Color(0x0a0f1a) },
+      bottom: { value: new THREE.Color(0x1b2636) },
+      horizon:{ value: new THREE.Color(0x2c3b4a) },
+    },
+    vertexShader: `
+      varying vec3 vPos;
+      void main() {
+        vPos = position;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }`,
+    fragmentShader: `
+      varying vec3 vPos;
+      uniform vec3 top; uniform vec3 bottom; uniform vec3 horizon;
+      void main() {
+        float h = normalize(vPos).y;
+        vec3 col = h > 0.0
+          ? mix(horizon, top, pow(h, 0.55))
+          : mix(horizon, bottom, pow(-h, 0.7));
+        gl_FragColor = vec4(col, 1.0);
+      }`
+  });
+  return new THREE.Mesh(geo, mat);
+}
+
+// ---- added: quiet full-frame vignette so the eye settles on the city
+// rather than the corners of the viewport ----
+const VignetteShader = {
+  uniforms: { tDiffuse: { value: null }, amount: { value: 0.32 } },
+  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+  fragmentShader: `
+    varying vec2 vUv; uniform sampler2D tDiffuse; uniform float amount;
+    void main() {
+      vec4 c = texture2D(tDiffuse, vUv);
+      vec2 d = vUv - 0.5;
+      float v = smoothstep(0.85, 0.35, dot(d, d) * 2.0);
+      c.rgb *= mix(1.0 - amount, 1.0, v);
+      gl_FragColor = c;
+    }`
+};
+
 async function main() {
   let meta, heights;
   try {
+    setStage("fetching scene metadata…");
     const m = await fetch(`data/${SCENE}/meta.json`);
     if (!m.ok) throw new Error(`meta.json HTTP ${m.status}`);
     meta = await m.json();
+    setStage("fetching height field…");
     const h = await fetch(`data/${SCENE}/heights.bin`);
     if (!h.ok) throw new Error(`heights.bin HTTP ${h.status}`);
     heights = new Float32Array(await h.arrayBuffer());
@@ -251,17 +429,35 @@ async function main() {
   }
 
   try {
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    setStage("compiling renderer…");
+    // ---- perf: default to a lighter render path. Integrated GPUs (no
+    // discrete card — typical on an i5 laptop) pay heavily for MSAA and
+    // high device-pixel-ratio supersampling; both cost far more than they
+    // add on a 13"-15" screen. "high" quality (toggled via the FX button)
+    // restores antialiasing and adds bloom/vignette for stronger hardware.
+    let quality = "low";
+    const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.25));
     renderer.setSize(innerWidth, innerHeight);
+    // ---- added: filmic tone mapping — the same geometry reads as "cinematic
+    // render" instead of "flat game engine default" for free.
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     $("stage").appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0d1117);
-    scene.fog = new THREE.Fog(0x0d1117, SPAN * 1.3, SPAN * 3.4);
+    scene.fog = new THREE.Fog(0x131c26, SPAN * 1.35, SPAN * 3.6);
+
+    // ---- added: sky dome, sits behind the fog ----
+    scene.add(buildSky(SPAN * 8));
 
     const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.5, SPAN * 6);
-    camera.position.set(SPAN * 0.45, SPAN * 0.30, SPAN * 0.45);
+    const homePos = new THREE.Vector3(SPAN * 0.45, SPAN * 0.30, SPAN * 0.45);
+    // ---- added: cinematic entry — start pulled back and higher, then glide
+    // into the working camera position instead of cutting straight to it.
+    camera.position.set(SPAN * 1.1, SPAN * 0.95, SPAN * 1.15);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -269,19 +465,26 @@ async function main() {
     controls.maxPolarAngle = Math.PI * 0.495;
     controls.minDistance = SPAN * 0.03;
     controls.maxDistance = SPAN * 2.2;
+    controls.autoRotate = false;
+    controls.autoRotateSpeed = 0.6;
+    controls.addEventListener("start", () => { if (controls.autoRotate) setSpin(false); });
 
     const el = THREE.MathUtils.degToRad(meta.sun_elevation_deg ?? 45);
     const az = THREE.MathUtils.degToRad(meta.sun_azimuth_deg ?? 135);
     scene.add(
       new THREE.DirectionalLight(0xfff2dd, 2.0).translateX(0),
-      new THREE.AmbientLight(0x93a4bd, 1.6)
+      new THREE.AmbientLight(0x93a4bd, 1.6),
+      // ---- added: cool rim/hemisphere fill so shadow-side facades aren't
+      // pure black — doesn't touch the real sun direction used for measurement.
+      new THREE.HemisphereLight(0x8fb4ff, 0x1a1410, 0.55)
     );
-    scene.children[0].position.set(
+    scene.children[1].position.set(
       Math.cos(el) * Math.sin(az) * SPAN,
       Math.sin(el) * SPAN,
       -Math.cos(el) * Math.cos(az) * SPAN
     );
 
+    setStage("building city geometry…");
     const t0 = performance.now();
     const { roof, wall, tris, walls } = buildCity(heights, N, SPAN, WALL_THRESHOLD_M);
     const buildMs = Math.round(performance.now() - t0);
@@ -304,15 +507,119 @@ async function main() {
     $("meshInfo").textContent =
       `${Math.round(tris / 1000)}k tris · ${walls} walls · ${buildMs}ms`;
 
+    // ---- added: ground disc + range rings under the city. A geospatial
+    // tool showing distance context is functional, not decorative — it's
+    // the same instinct as a map's scale bar.
+    const groundGeo = new THREE.CircleGeometry(SPAN * 2.2, 64);
+    const groundMat = new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false,
+      uniforms: { span: { value: SPAN } },
+      vertexShader: `varying vec2 vXy; void main(){ vXy = position.xy; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+      fragmentShader: `
+        varying vec2 vXy; uniform float span;
+        void main() {
+          float d = length(vXy) / (span * 1.1);
+          float a = smoothstep(1.0, 0.15, d) * 0.5;
+          gl_FragColor = vec4(0.07, 0.09, 0.12, a);
+        }`
+    });
+    const groundDisc = new THREE.Mesh(groundGeo, groundMat);
+    groundDisc.rotation.x = -Math.PI / 2;
+    groundDisc.position.y = -0.05;
+    scene.add(groundDisc);
+
+    const ringGroup = new THREE.Group();
+    [0.25, 0.5, 0.75, 1.0].forEach(f => {
+      const r = (SPAN / 2) * f;
+      const ring = new THREE.LineLoop(
+        new THREE.BufferGeometry().setFromPoints(
+          Array.from({ length: 65 }, (_, i) => {
+            const a = (i / 64) * Math.PI * 2;
+            return new THREE.Vector3(Math.cos(a) * r, 0.02, Math.sin(a) * r);
+          })
+        ),
+        new THREE.LineBasicMaterial({ color: 0x2a3038, transparent: true, opacity: 0.55 })
+      );
+      ringGroup.add(ring);
+    });
+    scene.add(ringGroup);
+
+    // World-space direction TO the sun — same el/az used for the directional
+    // light above, so the water's glint sits at the physically correct spot.
+    const sunDirWorld = new THREE.Vector3(
+      Math.cos(el) * Math.sin(az), Math.sin(el), -Math.cos(el) * Math.cos(az)
+    ).normalize();
+
     const water = new THREE.Mesh(
-      new THREE.PlaneGeometry(SPAN, SPAN).rotateX(-Math.PI / 2),
-      new THREE.MeshStandardMaterial({
-        color: 0x2f6fd0, transparent: true, opacity: 0.62,
-        roughness: 0.15, metalness: 0.0
+      new THREE.PlaneGeometry(SPAN, SPAN, 48, 48).rotateX(-Math.PI / 2),
+      // ---- enhanced: animated shader water — brighter base colour, plus a
+      // real specular sun-glint (not just fresnel) so the actual sun
+      // direction shows up as a highlight on the surface, the way real
+      // water does. Position/visibility/level are still fully driven by
+      // the original applyFlood() logic below.
+      new THREE.ShaderMaterial({
+        transparent: true,
+        uniforms: {
+          time: { value: 0 },
+          color: { value: new THREE.Color(0x4f8fe8) },
+          opacity: { value: 0.55 },
+          sunDir: { value: sunDirWorld },
+        },
+        vertexShader: `
+          varying vec2 vUv; varying vec3 vNormalV; varying vec3 vViewDir; varying vec3 vSunDirV;
+          uniform float time; uniform vec3 sunDir;
+          void main() {
+            vUv = uv;
+            vec3 p = position;
+            p.y += sin((p.x + time * 1.3) * 0.35) * 0.06
+                 + sin((p.z - time * 1.7) * 0.5) * 0.05;
+            vec4 mv = modelViewMatrix * vec4(p, 1.0);
+            vViewDir = normalize(-mv.xyz);
+            vNormalV = normalize(normalMatrix * normal);
+            vSunDirV = normalize(mat3(viewMatrix) * sunDir);
+            gl_Position = projectionMatrix * mv;
+          }`,
+        fragmentShader: `
+          varying vec3 vNormalV; varying vec3 vViewDir; varying vec3 vSunDirV;
+          uniform vec3 color; uniform float opacity;
+          void main() {
+            float fres = pow(1.0 - max(dot(vNormalV, vViewDir), 0.0), 2.2);
+            vec3 col = mix(color, vec3(0.8, 0.9, 1.0), fres * 0.55);
+            // Sun glint: a bright specular lobe around the true reflection
+            // of the sun direction, like light catching a ripple.
+            vec3 halfDir = normalize(vSunDirV + vViewDir);
+            float glint = pow(max(dot(vNormalV, halfDir), 0.0), 60.0);
+            col += vec3(1.0, 0.92, 0.75) * glint * 1.4;
+            gl_FragColor = vec4(col, opacity + fres * 0.25 + glint * 0.3);
+          }`
       })
     );
     water.visible = false;
     scene.add(water);
+
+    // ---- added: post-processing composer. Bloom/vignette are the two
+    // most GPU-expensive things in this file (multiple blur render targets
+    // per frame), so they're OFF by default and only added in "high"
+    // quality mode. The render path is otherwise identical either way.
+    const composer = new EffectComposer(renderer);
+    const renderPass = new RenderPass(scene, camera);
+    // Bloom rendered at half resolution — visually close to full-res, roughly
+    // a quarter of the pixel cost.
+    const bloom = new UnrealBloomPass(
+      new THREE.Vector2(Math.floor(innerWidth / 2), Math.floor(innerHeight / 2)), 0.4, 0.65, 0.86
+    );
+    const vignette = new ShaderPass(VignetteShader);
+    function applyQuality() {
+      composer.passes = quality === "high" ? [renderPass, bloom, vignette] : [renderPass];
+    }
+    applyQuality();
+    $("btnQuality").onclick = () => {
+      quality = quality === "low" ? "high" : "low";
+      $("btnQuality").textContent = quality === "high" ? "FX·HIGH" : "FX·LOW";
+      $("btnQuality").classList.toggle("on", quality === "high");
+      applyQuality();
+      toast(quality === "high" ? "Effects on — watch your fps" : "Effects off — lighter render");
+    };
 
     const s = meta.stats;
     const nB = s.n_buildings ?? meta.buildings.length;
@@ -396,6 +703,40 @@ async function main() {
           : `≈ ${(h / 3).toFixed(1)} storeys`;
     });
 
+    // ---- added: lightweight hover reticle. Throttled by wall-clock time
+    // (not by frame) so it stays cheap even on the largest baked grids,
+    // where raycasting a ~1M-triangle mesh every mousemove would stutter.
+    const reticle = new THREE.Mesh(
+      new THREE.RingGeometry(0.9, 1.15, 24),
+      new THREE.MeshBasicMaterial({ color: 0x4dd0a7, transparent: true, opacity: 0.85, side: THREE.DoubleSide })
+    );
+    reticle.visible = false;
+    scene.add(reticle);
+    let lastHover = 0;
+    renderer.domElement.addEventListener("pointermove", ev => {
+      // Raycasting the city mesh is CPU work that scales with triangle
+      // count — on a dense bake (e.g. --grid 512) doing this every few
+      // frames can itself become the bottleneck on a laptop CPU, so it's
+      // gated behind the same quality toggle as the GPU-heavy effects.
+      if (walking || quality === "low") return;
+      const now = performance.now();
+      if (now - lastHover < 120) return;
+      lastHover = now;
+      const hx = (ev.clientX / innerWidth) * 2 - 1;
+      const hy = -(ev.clientY / innerHeight) * 2 + 1;
+      ray.setFromCamera(new THREE.Vector2(hx, hy), camera);
+      const hit = ray.intersectObjects([roofMesh, wallMesh])[0];
+      if (hit) {
+        reticle.visible = true;
+        reticle.position.copy(hit.point).addScaledVector(hit.face.normal, 0.05);
+        reticle.lookAt(camera.position);
+        const scale = Math.max(0.4, hit.distance * 0.012);
+        reticle.scale.set(scale, scale, scale);
+      } else {
+        reticle.visible = false;
+      }
+    });
+
     const sorted = Float32Array.from(heights).sort();
     const maxH = meta.max_height_m ?? 1;
 
@@ -404,6 +745,7 @@ async function main() {
       const exag = +$("exagRange").value / 10;
       water.visible = level > 0.01;
       water.position.y = level * exag;
+      water.material.uniforms.opacity.value = 0.55;
       $("floodLevel").textContent = `${level.toFixed(1)} m`;
       let lo = 0, hi = sorted.length;
       while (lo < hi) { const m = (lo + hi) >> 1; sorted[m] < level ? lo = m + 1 : hi = m; }
@@ -451,6 +793,7 @@ async function main() {
       $("btnOrbit").classList.toggle("on", !walk);
       $("cross").style.display = walk ? "block" : "none";
       $("fpHint").style.display = walk ? "block" : "none";
+      if (walk) reticle.visible = false;
 
       if (walk) {
         orbitState = { pos: camera.position.clone(),
@@ -519,20 +862,105 @@ async function main() {
 
     $("mode").hidden = false;
 
+    // ---- added: live compass, reading the camera's own look direction ----
+    const ticksSvg = $("ticks");
+    for (let d = 0; d < 360; d += 30) {
+      if (d % 90 === 0) continue;
+      const a = THREE.MathUtils.degToRad(d);
+      const x1 = 60 + Math.sin(a) * 50, y1 = 60 - Math.cos(a) * 50;
+      const x2 = 60 + Math.sin(a) * 56, y2 = 60 - Math.cos(a) * 56;
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", x1); line.setAttribute("y1", y1);
+      line.setAttribute("x2", x2); line.setAttribute("y2", y2);
+      line.setAttribute("stroke", "#525c66"); line.setAttribute("stroke-width", "1.5");
+      ticksSvg.appendChild(line);
+    }
+    const sunAzDeg = meta.sun_azimuth_deg ?? 135;
+    const sunDotEl = $("sunDot");
+    {
+      const a = THREE.MathUtils.degToRad(sunAzDeg);
+      sunDotEl.setAttribute("cx", 60 + Math.sin(a) * 48);
+      sunDotEl.setAttribute("cy", 60 - Math.cos(a) * 48);
+    }
+    const compassRing = $("compassRing"), headingVal = $("headingVal");
+    const CARD = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+    const camDir = new THREE.Vector3();
+    function updateCompass() {
+      camera.getWorldDirection(camDir);
+      const bearing = (THREE.MathUtils.radToDeg(Math.atan2(camDir.x, -camDir.z)) + 360) % 360;
+      compassRing.setAttribute("transform", `rotate(${-bearing} 60 60)`);
+      const card = CARD[Math.round(bearing / 45) % 8];
+      headingVal.textContent = `${bearing.toFixed(0).padStart(3, "0")}° ${card}`;
+    }
+
+    // ---- added: screenshot + showcase spin controls ----
+    function toast(msg) {
+      const t = $("toast"); t.textContent = msg; t.classList.add("show");
+      clearTimeout(toast._h);
+      toast._h = setTimeout(() => t.classList.remove("show"), 1800);
+    }
+    $("btnShot").onclick = () => {
+      composer.render();
+      const url = renderer.domElement.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = url; a.download = `${SCENE}_depthwizard.png`; a.click();
+      const flash = $("flash");
+      flash.style.opacity = "0.85";
+      setTimeout(() => (flash.style.opacity = "0"), 90);
+      toast("Screenshot saved");
+    };
+    let spinning = false;
+    function setSpin(on) {
+      spinning = on;
+      controls.autoRotate = on;
+      $("btnSpin").classList.toggle("on", on);
+      toast(on ? "Showcase spin on" : "Showcase spin off");
+    }
+    $("btnSpin").onclick = () => setSpin(!spinning);
+
     addEventListener("resize", () => {
       camera.aspect = innerWidth / innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(innerWidth, innerHeight);
+      composer.setSize(innerWidth, innerHeight);
     });
 
     $("load").hidden = true;
-    for (const id of ["meta", "probe", "flood"]) $(id).hidden = false;
+    for (const id of ["meta", "probe", "flood", "compass"]) { $(id).hidden = false; requestAnimationFrame(() => $(id).classList.add("show")); }
+
+    // ---- added: hero reveal — one orchestrated opening moment, then it
+    // gets out of the way. Uses the scene's own headline number.
+    if (nB && s.n_measured != null) {
+      $("heroSub").textContent = "buildings measured from shadow geometry — no LiDAR, no stereo pair";
+      countUp($("heroNum"), s.n_measured, 0, "", 1300);
+      requestAnimationFrame(() => $("hero").classList.add("show"));
+      setTimeout(() => {
+        $("hero").classList.remove("show"); $("hero").classList.add("hide");
+      }, 4200);
+    } else {
+      $("hero").style.display = "none";
+    }
+
+    // ---- added: cinematic camera glide from the wide establishing shot
+    // into the working position, then hand off to OrbitControls untouched.
+    const flyFrom = camera.position.clone();
+    const flyStart = performance.now();
+    const FLY_MS = 2600;
+    function flyStep(now) {
+      const p = Math.min(1, (now - flyStart) / FLY_MS);
+      const eased = 1 - Math.pow(1 - p, 3);
+      camera.position.lerpVectors(flyFrom, homePos, eased);
+      if (p < 1) requestAnimationFrame(flyStep);
+    }
+    requestAnimationFrame(flyStep);
 
     (function loop() {
       requestAnimationFrame(loop);
       walkStep();
+      water.material.uniforms.time.value = performance.now() / 1000;
       if (!walking) controls.update();
-      renderer.render(scene, camera);
+      updateCompass();
+      composer.render();
     })();
   } catch (e) {
     fail(`Scene setup failed: <b>${e.message}</b><br><br><i>${e.stack || ""}</i>`);
