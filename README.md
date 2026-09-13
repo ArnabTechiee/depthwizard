@@ -17,7 +17,7 @@ Heights are **measured, not inferred**. For a vertical structure whose shadow
 falls on flat ground:
 
 ```
-h  =  L_pixels  ×  GSD  ÷  tan(sun_elevation)
+h  =  L_pixels  ×  GSD  ×  tan(sun_elevation)
 ```
 
 Sun elevation and azimuth come from the product's own metadata; ground sample
