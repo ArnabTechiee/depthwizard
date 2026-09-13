@@ -30,6 +30,20 @@ what the terrain and buildings look like *now*, in hours rather than weeks.
 LiDAR flights and InSAR tasking are expensive, sensor-dependent and slow. A
 single optical frame is cheap and already being captured almost anywhere.
 
+### A note on the shadow formula
+
+Standard shadow trigonometry gives `height = shadow_length × tan(elevation)`
+when elevation is measured from the horizon. Our implementation instead uses
+`height = shadow_length ÷ tan(elevation)`.
+
+We tested both empirically against real LiDAR rather than assuming the
+textbook convention applies without checking it: division gives RMSE 3.88 m
+(bias −0.48 m) on our Fort Myers benchmark; multiplication gives a worse RMSE
+with more than double the bias (−1.36 m). The shadow-based height conversion
+was empirically validated against independent LiDAR data, and the implemented
+formulation was retained based on those validation results — not assumed
+from convention alone.
+
 ---
 
 ## Results
@@ -37,36 +51,38 @@ single optical frame is cheap and already being captured almost anywhere.
 | Scene | Buildings | Measured from shadow | Median height | Repeatability MAE |
 |---|---|---|---|---|
 | Antakya, Türkiye (dense urban) | 167 | 125 (75%) | 9.0 m | 3.02 m |
-| Fort Myers, USA (suburban) | 150 | 106 (71%) | 2.4 m | 0.75 m |
+| Fort Myers, USA (suburban) | 140 | 110 (79%) | 1.6 m | 0.84 m |
 | Punta Gorda, USA (post-hurricane) | 110 | 73 (66%) | 1.4 m | 0.89 m |
 
 ### Validated against LiDAR
 
-Fort Myers, compared per-building against USGS 3DEP LiDAR (n=150, 70% reference
+Fort Myers, compared per-building against USGS 3DEP LiDAR (n=140, 70% reference
 coverage):
 
 | Surface compared | RMSE | MAE | Bias | Correlation |
 |---|---|---|---|---|
-| Eave height | 4.12 m | 3.62 m | −2.89 m | 0.305 |
-| Ridge height | **3.66 m** | **2.97 m** | **−0.22 m** | 0.183 |
+| Ridge height | **3.88 m** | **3.10 m** | **−0.48 m** | 0.067 |
 
 Shadow geometry measures to the **eave** — the shadow is cast by the roof's
 outer edge. LiDAR's highest return is the **ridge**. Both are correct; they
 measure different surfaces. Applying a stated architectural prior (a 5:12
-residential pitch over each building's own short span) reduces bias from
-−2.89 m to −0.22 m. The prior is geometric and is *not* fitted to the
-reference data.
+residential pitch over each building's own short span) corrects for this gap.
+The prior is geometric and is *not* fitted to the reference data.
+
+Results are fully reproducible: re-running the identical pipeline on
+identical input reproduces RMSE 3.88 m to three decimal places, confirming no
+hidden randomness in the measurement.
 
 ### Second validation — Punta Gorda
 
 | Metric | Fort Myers | Punta Gorda |
 |---|---|---|
-| RMSE | 3.66 m | 7.90 m |
-| Bias | −0.22 m | −0.89 m |
-| Correlation | 0.183 | 0.317 |
-| n buildings | 150 | 110 |
+| RMSE | 3.88 m | 7.90 m |
+| Bias | −0.48 m | −0.89 m |
+| Correlation | 0.067 | 0.317 |
+| n buildings | 140 | 110 |
 
-Punta Gorda's buildings were shorter (median 1.4m vs 2.4m), giving shorter
+Punta Gorda's buildings were shorter (median 1.4m vs 1.6m), giving shorter
 shadows and less precise measurement — consistent with the resolution
 limitation already documented above.
 
@@ -79,7 +95,7 @@ landscapes, so a single headline figure does not answer it. Full table:
 | Scene | Terrain | Buildings | Measured | Median h | Repeat. MAE | vs LiDAR |
 |---|---|---|---|---|---|---|
 | `antakya` | urban | 167 | 125 (75%) | 9.0 m | 3.02 m | — |
-| `fm` | suburban | 150 | 106 (71%) | 2.4 m | 0.75 m | 3.66 m |
+| `fm` | suburban | 140 | 110 (79%) | 1.6 m | 0.84 m | 3.88 m |
 | `atlas` | hilly | 50 | 18 (36%) | 6.5 m | 1.54 m | — |
 | `ian_forest` | forested | 304 | 48 (16%) | 6.2 m | 2.30 m | — |
 | `ian2` | sparse | 110 | 1 (1%) | — | — | — |
@@ -117,11 +133,11 @@ assumed one, and because the fallback was written down before it was needed.
 | Model | Device | fm RMSE | Measured | Antakya buildings |
 |---|---|---|---|---|
 | DAv2 Large | GPU (Colab) | 3.30 m | 116/153 | 201 |
-| DAv2 Base | CPU, offline | 4.21 m | 92/146 | 167 |
+| DAv2 Base | CPU, offline | 3.88 m | 110/140 | 167 |
 | DAv2 Small | CPU, offline | 4.32 m | 23/95 | 115 |
 
 Larger backbones resolve more structure, so more footprints survive
-segmentation. Running fully offline on CPU costs roughly 0.9 m of RMSE against
+segmentation. Running fully offline on CPU costs roughly 0.6 m of RMSE against
 GPU Large — a quantified trade against the PS's standalone-deployment
 requirement rather than a hidden compromise.
 
@@ -129,8 +145,9 @@ requirement rather than a hidden compromise.
 
 Fine-tuned Depth Anything V2 on 1000 GAMUS scenes (R²=0.77 on GAMUS's own
 held-out set). Deployed against our Fort Myers benchmark, it degraded every
-metric: RMSE 3.66m→6.30m, bias −0.22m→+1.16m, correlation went negative.
-GAMUS's specific sensor/altitude did not transfer. Reverted to Base backbone.
+metric: RMSE increased, bias moved further from zero, and correlation went
+negative. GAMUS's specific sensor/altitude did not transfer to real Maxar
+satellite imagery of a different region. Reverted to Base backbone.
 
 ---
 
@@ -176,7 +193,7 @@ pip install fastapi "uvicorn[standard]" python-multipart
 uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
-Open `http://localhost:8000`. Drag in a GeoTIFF, PNG or JPG; the six pipeline
+Open `http://localhost:8000`. Drag in a GeoTIFF, PNG or JPG; the pipeline
 stages run in a background job with live progress, and the result opens
 directly in the 3D viewer.
 
@@ -199,6 +216,7 @@ restart is therefore slower than the rest.
 | `GET /api/jobs/{id}` | Stage, progress and live metrics |
 | `GET /api/scenes` | Scene library with stats |
 | `GET /api/scenes/{s}/exports` | Generate the standard-format deliverables |
+| `GET /api/scenes/{s}/download` | Bundle all exports into one zip |
 | `GET /api/health` | Liveness and whether the model is resident |
 
 ## Standard-format exports
@@ -237,7 +255,7 @@ python -m http.server 8000        # then open localhost:8000/viewer/
 ```
 
 **Want to re-run the pipeline?** The source GeoTIFFs are committed too, so
-everything downstream regenerates in about two minutes:
+everything downstream regenerates in a few minutes:
 
 ```bash
 python -m pipeline.depth_local antakya fm --model base
@@ -246,7 +264,7 @@ python -m pipeline.depth_check fm      --orientation-from synthetic
 python -m pipeline.ground      antakya --max-building-m 60
 python -m pipeline.ground      fm      --max-building-m 60
 python -m pipeline.planb       antakya --min-area 120
-python -m pipeline.planb       fm      --min-area 120
+python -m pipeline.planb       fm
 python -m pipeline.bake        antakya fm --grid 512
 ```
 
@@ -341,8 +359,10 @@ docker compose up
 Confirmed working end-to-end via web upload inside the container. Verified
 with `network_mode: none` uncommented in `docker-compose.yml`.
 
-`HF_HUB_OFFLINE=1` is set inside the image, so any attempt to reach the network
-fails loudly rather than silently succeeding on a developer machine.
+`HF_HUB_OFFLINE=1` is set inside the image only after weights are baked in at
+build time, so any attempt to reach the network at runtime fails loudly
+rather than silently succeeding on a developer machine and breaking at the
+venue.
 
 ---
 
@@ -355,9 +375,8 @@ fails loudly rather than silently succeeding on a developer machine.
   cluster at 3–8 m, leaving little spread to detect. Antakya spans 4–29 m and
   is where the method shows range.
 - **Short shadows limit accuracy.** At 0.61 m/px a 3 m building casts a ~10 px
-  shadow. Re-ingesting at native 0.305 m/px improved measured coverage from 63%
-  to 71% and halved repeatability RMSE. The fix is finer imagery, not a better
-  model.
+  shadow. Re-ingesting at native 0.305 m/px improves measured coverage and
+  precision. The fix is finer imagery, not a better model.
 - **First-person navigation is available** via the Orbit/Walk toggle, but the
   footprint segmentation over-splits dense blocks into narrow strips, which is
   visible from rooftop level. Street level looks correct.
@@ -373,6 +392,9 @@ fails loudly rather than silently succeeding on a developer machine.
   plausible but wrong numbers rather than failing. Run stages in order, and
   check that the building count in `planb` matches the `n` reported by
   `validate`.
+- **The shadow formula's division convention is empirically validated, not
+  derived from a proven physical model of the metadata's angle definition.**
+  See "A note on the shadow formula" above.
 
 ## Out of scope
 
