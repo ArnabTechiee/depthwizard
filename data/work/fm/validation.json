@@ -5,29 +5,29 @@
   "dsm_coverage": 0.7034,
   "all_pixels": {
     "n": 4194304,
-    "rmse_m": 3.194,
-    "mae_m": 1.718,
-    "bias_m": 0.169,
+    "rmse_m": 3.098,
+    "mae_m": 1.621,
+    "bias_m": -0.457,
     "ref_mean_m": 1.758,
-    "pred_mean_m": 1.928,
-    "correlation": 0.4706,
-    "r2": -0.1028
+    "pred_mean_m": 1.302,
+    "correlation": 0.3981,
+    "r2": -0.0375
   },
   "building_pixels": {
-    "n": 1667605,
-    "rmse_m": 5.057,
-    "mae_m": 4.195,
-    "bias_m": 0.512,
-    "ref_mean_m": 4.314,
-    "pred_mean_m": 4.826,
-    "correlation": -0.08,
-    "r2": -1.0678
+    "n": 1454327,
+    "rmse_m": 5.24,
+    "mae_m": 4.442,
+    "bias_m": -1.257,
+    "ref_mean_m": 4.916,
+    "pred_mean_m": 3.658,
+    "correlation": -0.2709,
+    "r2": -1.4251
   },
   "per_building": {
-    "n_buildings": 150,
-    "rmse_m": 3.658,
-    "mae_m": 2.97,
-    "bias_m": -0.22,
-    "correlation": 0.1827
+    "n_buildings": 140,
+    "rmse_m": 3.883,
+    "mae_m": 3.095,
+    "bias_m": -0.479,
+    "correlation": 0.0668
   }
 }

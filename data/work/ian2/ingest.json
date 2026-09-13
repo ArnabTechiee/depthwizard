@@ -1,6 +1,6 @@
 {
   "scene_id": "ian2",
-  "source_path": "data\\raw\\ian2.tif",
+  "source_path": "/app/data/raw/ian2.tif",
   "mode": "absolute",
   "width": 1024,
   "height": 1024,
